@@ -1,0 +1,18 @@
+{
+    "name": "io-game-template",
+    "version": "1.0.0",
+    "description": "",
+    "scripts": {
+        "lint": "pnpm -r lint",
+        "dev": "pnpm -r dev",
+        "build": "pnpm -r build",
+        "dev:client": "cd client && pnpm dev",
+        "dev:server": "cd server && pnpm dev"
+    },
+    "keywords": [],
+    "author": {
+        "name": "Leia",
+        "email": "leia@tutamail.com"
+    },
+    "license": "GPL-3.0"
+}
