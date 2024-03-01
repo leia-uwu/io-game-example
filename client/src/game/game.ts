@@ -91,7 +91,7 @@ export class Game {
      * Process a game update packet
      */
     updateFromPacket(packet: UpdatePacket): void {
-        if (packet.playerDataDirty.activeId) {
+        if (packet.playerDataDirty.id) {
             this.activePlayerID = packet.playerData.id;
         }
 

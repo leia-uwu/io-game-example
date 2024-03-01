@@ -77,7 +77,7 @@ export class UpdatePacket extends Packet {
     fullObjects: Array<GameObject & { data: Required<ObjectsNetData[GameObject["type"]]> }> = [];
 
     playerDataDirty = {
-        activeId: false,
+        id: false,
         zoom: false
     };
 
@@ -110,10 +110,11 @@ export class UpdatePacket extends Packet {
         stream.writeUint8(flags);
 
         if (flags & UpdateFlags.PlayerData) {
-            stream.writeBoolean(this.playerDataDirty.activeId);
-            if (this.playerDataDirty.activeId) {
+            stream.writeBoolean(this.playerDataDirty.id);
+            if (this.playerDataDirty.id) {
                 stream.writeUint16(this.playerData.id);
             }
+
             stream.writeBoolean(this.playerDataDirty.zoom);
             if (this.playerDataDirty.zoom) {
                 stream.writeUint8(this.playerData.zoom);
@@ -158,7 +159,7 @@ export class UpdatePacket extends Packet {
 
         if (flags & UpdateFlags.PlayerData) {
             if (stream.readBoolean()) {
-                this.playerDataDirty.activeId = true;
+                this.playerDataDirty.id = true;
                 this.playerData.id = stream.readUint16();
             }
 

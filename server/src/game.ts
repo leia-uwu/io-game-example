@@ -22,7 +22,7 @@ export class Game {
     mapDirty = false;
 
     // TODO: id allocator
-    private _currentId = 0;
+    private _currentId = 1;
 
     nextId(): number {
         return this._currentId++;
@@ -53,6 +53,14 @@ export class Game {
         // Second loop over players: calculate visible objects & send updates
         for (const player of this.players) {
             player.sendPackets();
+        }
+
+        // reset stuff
+
+        for (const player of this.players) {
+            for (const key in player.dirty) {
+                player.dirty[key as keyof Player["dirty"]] = false;
+            }
         }
 
         this.deletedObjects.clear();

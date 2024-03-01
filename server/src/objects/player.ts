@@ -120,9 +120,8 @@ export class Player extends GameObject<ObjectType.Player> {
             }
         }
 
-        updatePacket.playerDataDirty.activeId = this.dirty.id;
-        this.dirty.id = false;
-        updatePacket.playerData.id = this.id;
+        updatePacket.playerData = this;
+        updatePacket.playerDataDirty = this.dirty;
 
         updatePacket.map.width = this.game.width;
         updatePacket.map.height = this.game.height;
