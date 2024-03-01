@@ -37,7 +37,7 @@ export const ObjectSerializations: { [K in ObjectType]: ObjectSerialization<K> }
             return {
                 partial: {
                     position: stream.readPosition(),
-                    direction: stream.readUnit(16),
+                    direction: stream.readUnit(16)
                 }
             };
         },
@@ -60,41 +60,74 @@ interface GameObject {
     data: ObjectsNetData[GameObject["type"]]
 }
 
+enum UpdateFlags {
+    PlayerData = 1 << 0,
+    DeletedObjects = 1 << 1,
+    FullObjects = 1 << 2,
+    PartialObjects = 1 << 3,
+    Map = 1 << 4
+}
+
 export class UpdatePacket extends Packet {
-    type = PacketType.Update;
-    allocBytes = 2 ** 16;
+    readonly type = PacketType.Update;
+    readonly allocBytes = 2 ** 16;
 
     deletedObjects: number[] = [];
     partialObjects: GameObject[] = [];
     fullObjects: Array<GameObject & { data: Required<ObjectsNetData[GameObject["type"]]> }> = [];
 
-    dirty = {
-        playerID: false
+    playerDataDirty = {
+        activeId: false,
+        zoom: false
     };
 
-    playerID!: number;
+    playerData = {
+        id: 0,
+        zoom: 0
+    };
+
+    mapDirty = false;
+    map = {
+        width: 0,
+        height: 0
+    };
 
     override serialize(): void {
         super.serialize();
         const stream = this.stream;
 
-        const deletedObjectsDirty = this.deletedObjects.length > 0;
-        const fullObjectsDirty = this.fullObjects.length > 0;
-        const partialObjectsDirty = this.partialObjects.length > 0;
+        let flags = 0;
+        if (Object.values(this.playerDataDirty).includes(true)) { flags += UpdateFlags.PlayerData; }
 
-        stream.writeBoolean(deletedObjectsDirty);
-        stream.writeBoolean(fullObjectsDirty);
-        stream.writeBoolean(partialObjectsDirty);
-        stream.writeBoolean(this.dirty.playerID);
+        if (this.deletedObjects.length > 0) { flags += UpdateFlags.DeletedObjects; }
 
-        if (deletedObjectsDirty) {
+        if (this.fullObjects.length > 0) { flags += UpdateFlags.FullObjects; }
+
+        if (this.partialObjects.length > 0) { flags += UpdateFlags.PartialObjects; }
+
+        if (this.mapDirty) { flags += UpdateFlags.Map; }
+
+        stream.writeUint8(flags);
+
+        if (flags & UpdateFlags.PlayerData) {
+            stream.writeBoolean(this.playerDataDirty.activeId);
+            if (this.playerDataDirty.activeId) {
+                stream.writeUint16(this.playerData.id);
+            }
+            stream.writeBoolean(this.playerDataDirty.zoom);
+            if (this.playerDataDirty.zoom) {
+                stream.writeUint8(this.playerData.zoom);
+            }
+        }
+
+        if (flags & UpdateFlags.DeletedObjects) {
             stream.writeUint16(this.deletedObjects.length);
             for (const id of this.deletedObjects) {
                 stream.writeUint16(id);
             }
         }
 
-        if (fullObjectsDirty) {
+        if (flags & UpdateFlags.FullObjects) {
             stream.writeUint16(this.fullObjects.length);
 
             for (const object of this.fullObjects) {
@@ -104,7 +137,7 @@ export class UpdatePacket extends Packet {
             }
         }
 
-        if (partialObjectsDirty) {
+        if (flags & UpdateFlags.PartialObjects) {
             stream.writeUint16(this.partialObjects.length);
 
             for (const object of this.partialObjects) {
@@ -114,25 +147,35 @@ export class UpdatePacket extends Packet {
             }
         }
 
-        if (this.dirty.playerID) {
-            stream.writeUint16(this.playerID);
+        if (flags & UpdateFlags.Map) {
+            stream.writeUint16(this.map.width);
+            stream.writeUint16(this.map.height);
         }
     }
 
     override deserialize(stream: GameBitStream): void {
-        const deletedObjectsDirty = stream.readBoolean();
-        const fullObjectsDirty = stream.readBoolean();
-        const partialObjectsDirty = stream.readBoolean();
-        this.dirty.playerID = stream.readBoolean();
+        const flags = stream.readUint8();
 
-        if (deletedObjectsDirty) {
+        if (flags & UpdateFlags.PlayerData) {
+            if (stream.readBoolean()) {
+                this.playerDataDirty.activeId = true;
+                this.playerData.id = stream.readUint16();
+            }
+
+            if (stream.readBoolean()) {
+                this.playerDataDirty.zoom = true;
+                this.playerData.zoom = stream.readUint8();
+            }
+        }
+
+        if (flags & UpdateFlags.DeletedObjects) {
             const count = stream.readUint16();
             for (let i = 0; i < count; i++) {
                 this.deletedObjects.push(stream.readUint16());
             }
         }
 
-        if (fullObjectsDirty) {
+        if (flags & UpdateFlags.FullObjects) {
             const count = stream.readUint16();
 
             for (let i = 0; i < count; i++) {
@@ -147,7 +190,7 @@ export class UpdatePacket extends Packet {
             }
         }
 
-        if (partialObjectsDirty) {
+        if (flags & UpdateFlags.PartialObjects) {
             const count = stream.readUint16();
 
             for (let i = 0; i < count; i++) {
@@ -162,8 +205,10 @@ export class UpdatePacket extends Packet {
             }
         }
 
-        if (this.dirty.playerID) {
-            this.playerID = stream.readUint16();
+        if (flags & UpdateFlags.Map) {
+            this.mapDirty = true;
+            this.map.width = stream.readUint16();
+            this.map.height = stream.readUint16();
         }
     }
 }

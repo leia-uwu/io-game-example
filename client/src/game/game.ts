@@ -1,5 +1,5 @@
 import { GameBitStream, NetConstants, ObjectType, PacketType } from "../../../common/src/net";
-import { Application } from "pixi.js";
+import { Application, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { ObjectPool } from "../../../common/src/utils/objectPool";
@@ -25,6 +25,8 @@ export class Game {
 
     camera: Camera;
     inputManager: InputManager;
+
+    mapGraphics = new Graphics();
 
     constructor() {
         this.pixi = new Application<HTMLCanvasElement>({
@@ -89,8 +91,12 @@ export class Game {
      * Process a game update packet
      */
     updateFromPacket(packet: UpdatePacket): void {
-        if (packet.dirty.playerID) {
-            this.activePlayerID = packet.playerID;
+        if (packet.playerDataDirty.activeId) {
+            this.activePlayerID = packet.playerData.id;
+        }
+
+        if (packet.playerDataDirty.zoom) {
+            this.camera.zoom = packet.playerData.zoom;
         }
 
         for (const id of packet.deletedObjects) {
@@ -123,6 +129,32 @@ export class Game {
             object.updateFromData(partialObject.data);
         }
 
+        if (packet.mapDirty) {
+            const ctx = this.mapGraphics;
+            ctx.clear();
+            ctx.zIndex = -99;
+            this.camera.addObject(ctx);
+            ctx.lineStyle({
+                color: 0x000000,
+                alpha: 0.1,
+                width: 2
+            });
+
+            const gridSize = 16 * Camera.scale;
+            const gridWidth = packet.map.width * Camera.scale;
+            const gridHeight = packet.map.height * Camera.scale;
+            for (let x = 0; x <= gridWidth; x += gridSize) {
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, gridHeight);
+            }
+
+            for (let y = 0; y <= gridHeight; y += gridSize) {
+                ctx.moveTo(0, y);
+                ctx.lineTo(gridWidth, y);
+            }
+
+            ctx.endFill();
+        }
     }
 
     resize(): void {

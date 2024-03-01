@@ -1,3 +1,5 @@
+import { InputPacket } from "../../../common/src/packets/inputPacket";
+import { Vec2 } from "../../../common/src/utils/vector";
 import { type Game } from "./game";
 
 export class InputManager {
@@ -8,7 +10,7 @@ export class InputManager {
     /**
      * The angle between the mouse pointer and the screen center
      */
-    mouseAngle = 0;
+    mouseAngle = Vec2.new(0, 0);
 
     /**
      * The distance between the mouse pointer and the screen center
@@ -34,6 +36,19 @@ export class InputManager {
         window.addEventListener("pointerdown", this.handleInputEvent.bind(this, true));
         window.addEventListener("pointerup", this.handleInputEvent.bind(this, false));
         window.addEventListener("wheel", this.handleInputEvent.bind(this, true));
+
+        window.addEventListener("mousemove", (e) => {
+            const rotation = Math.atan2(window.innerHeight / 2 - e.clientY, window.innerWidth / 2 - e.clientX);
+
+            this.mouseAngle = Vec2.new(
+                Math.cos(rotation),
+                Math.sin(rotation)
+            );
+            const inputPacket = new InputPacket();
+            inputPacket.direction = this.mouseAngle;
+            inputPacket.serialize();
+            this.game.socket?.send(inputPacket.stream.buffer.slice(0, inputPacket.stream.index));
+        });
     }
 
     private _mWheelStopTimer: number | undefined;

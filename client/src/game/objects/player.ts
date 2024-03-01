@@ -24,8 +24,11 @@ export class Player extends GameObject<ObjectType.Player> {
 
     updateFromData(data: ObjectsNetData[ObjectType.Player]): void {
         this.position = data.partial.position;
+        this.direction = data.partial.direction;
 
         this.container.position.copyFrom(Camera.vecToScreen(this.position));
+
+        this.container.rotation = Math.atan2(this.direction.y, this.direction.x);
 
         if (this.id === this.game.activePlayerID) {
             this.game.camera.position = this.container.position;

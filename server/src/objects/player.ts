@@ -4,10 +4,10 @@ import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
 import { ObjectType, type Packet } from "../../../common/src/net";
 import { type Game } from "../game";
-import { type ObjectsNetData } from "../../../common/src/packets/updatePacket";
+import { UpdatePacket, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
-import { ObjectPool } from "../../../common/src/utils/objectPool";
 import { Random } from "../../../common/src/utils/random";
+import { MathUtils } from "../../../common/src/utils/math";
 
 export class Player extends GameObject<ObjectType.Player> {
     readonly type = ObjectType.Player;
@@ -15,42 +15,23 @@ export class Player extends GameObject<ObjectType.Player> {
     name: string;
     direction = Vec2.new(0, 0);
 
-    hitbox = new CircleHitbox(5);
+    hitbox = new CircleHitbox(1.5);
+
+    firstPacket = true;
 
     /**
     * Objects the player can see
     */
-    visibleObjects = new ObjectPool<GameObject>();
-    /**
-     * Objects the player can see with a 1x scope
-     */
-    nearObjects = new ObjectPool<GameObject>();
-    /**
-     * Objects that need to be partially updated
-     */
-    partialDirtyObjects = new ObjectPool<GameObject>();
-    /**
-     * Objects that need to be fully updated
-     */
-    fullDirtyObjects = new ObjectPool<GameObject>();
-    /**
-     * Objects that need to be deleted
-     */
-    deletedObjects = new Set<number>();
-    /**
-     * Ticks since last visible objects update
-     */
-    ticksSinceLastUpdate = 0;
+    visibleObjects = new Set<GameObject>();
 
     // what needs to be sent again to the client
     readonly dirty = {
         id: true,
         zoom: true
-    }
+    };
 
-    private _zoom = 0;
-    xCullDist!: number;
-    yCullDist!: number;
+    private _zoom = 64;
+
     get zoom(): number {
         return this._zoom;
     }
@@ -58,10 +39,7 @@ export class Player extends GameObject<ObjectType.Player> {
     set zoom(zoom: number) {
         if (this._zoom === zoom) return;
         this._zoom = zoom;
-        this.xCullDist = this._zoom * 96;
-        this.yCullDist = this._zoom * 64;
         this.dirty.zoom = true;
-        this.updateVisibleObjects();
     }
 
     get position(): Vector {
@@ -70,18 +48,17 @@ export class Player extends GameObject<ObjectType.Player> {
 
     set position(pos: Vector) {
         this.hitbox.position = pos;
+        this._position = pos;
     }
 
     constructor(game: Game, socket: WebSocket<PlayerData>) {
-        const pos = Random.vector(0, 10, 0, 10);
+        const pos = Random.vector(0, game.width, 0, game.height);
         super(game, pos);
         this.position = pos;
 
         this.socket = socket;
 
         this.name = socket.getUserData().name;
-
-        this.zoom = 10;
 
         socket.getUserData().gameObject = this;
     }
@@ -94,39 +71,71 @@ export class Player extends GameObject<ObjectType.Player> {
     }
 
     tick(): void {
+        this.position = Vec2.sub(this.position, this.direction);
+        this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
+        this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
+        this.setDirty();
 
+        for (const player of this.game.players) {
+            if (player !== this) {
+                this.hitbox.resolveCollision(player.hitbox);
+            }
+        }
+
+        this.game.grid.updateObject(this);
     }
 
-    updateVisibleObjects(): void {
-        this.ticksSinceLastUpdate = 0;
-        const minX = this.position.x - this.xCullDist;
-        const minY = this.position.y - this.yCullDist;
-        const maxX = this.position.x + this.xCullDist;
-        const maxY = this.position.y + this.yCullDist;
-        const rect = new RectHitbox(Vec2.new(minX, minY), Vec2.new(maxX, maxY));
+    sendPackets() {
+        // calculate visible, deleted, and dirty objects
+        // and send them to the client
+        const updatePacket = new UpdatePacket();
 
-        const newVisibleObjects = this.game.grid.intersectsHitbox(rect);
+        const radius = this.zoom + 10;
+        const rect = RectHitbox.fromCircle(radius, this.position);
+        const newVisibleObjects = this.game.grid.intersectHitbox(rect);
 
         for (const object of this.visibleObjects) {
             if (!newVisibleObjects.has(object)) {
                 this.visibleObjects.delete(object);
-                this.deletedObjects.add(object.id);
+                updatePacket.deletedObjects.push(object.id);
             }
         }
 
         for (const object of newVisibleObjects) {
             if (!this.visibleObjects.has(object)) {
                 this.visibleObjects.add(object);
-                this.fullDirtyObjects.add(object);
+                updatePacket.fullObjects.push(object);
             }
         }
+
+        for (const object of this.game.fullDirtyObjects) {
+            if (this.visibleObjects.has(object)) {
+                updatePacket.fullObjects.push(object);
+            }
+        }
+
+        for (const object of this.game.dirtyObjects) {
+            if (this.visibleObjects.has(object) && !updatePacket.fullObjects.includes(object)) {
+                updatePacket.partialObjects.push(object);
+            }
+        }
+
+        updatePacket.playerDataDirty.activeId = this.dirty.id;
+        this.dirty.id = false;
+        updatePacket.playerData.id = this.id;
+
+        updatePacket.map.width = this.game.width;
+        updatePacket.map.height = this.game.height;
+        updatePacket.mapDirty = this.firstPacket ?? this.game.mapDirty;
+
+        this.sendPacket(updatePacket);
     }
 
     get data(): Required<ObjectsNetData[ObjectType.Player]> {
         return {
             partial: {
                 position: this.position,
-                direction: this.direction,
+                direction: this.direction
 
             },
             full: {

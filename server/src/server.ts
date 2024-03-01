@@ -3,6 +3,7 @@ import { GameConstants } from "../../common/src/constants";
 import { GameBitStream, NetConstants, PacketType } from "../../common/src/net";
 import { type Player } from "./objects/player";
 import { Game } from "./game";
+import { InputPacket } from "../../common/src/packets/inputPacket";
 
 const port = 8000;
 
@@ -75,6 +76,10 @@ app.ws<PlayerData>("/play", {
 
             switch (packetType) {
                 case PacketType.Input: {
+                    const packet = new InputPacket();
+                    packet.deserialize(stream);
+                    player.direction = packet.direction;
+                    player.setDirty();
                     break;
                 }
             }
