@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "scripts": {
-        "lint": "pnpm -r lint",
+        "lint": "eslint . --fix --ext .ts",
         "dev": "pnpm -r dev",
         "build": "pnpm -r build",
         "dev:client": "cd client && pnpm dev",
