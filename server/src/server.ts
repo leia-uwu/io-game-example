@@ -1,9 +1,8 @@
 import { App, DEDICATED_COMPRESSOR_256KB } from "uWebSockets.js";
 import { GameConstants } from "../../common/src/constants";
-import { GameBitStream, NetConstants, PacketType } from "../../common/src/net";
+import { GameBitStream } from "../../common/src/net";
 import { type Player } from "./objects/player";
 import { Game } from "./game";
-import { InputPacket } from "../../common/src/packets/inputPacket";
 
 const port = 8000;
 
@@ -70,19 +69,9 @@ app.ws<PlayerData>("/play", {
     message(socket, message) {
         const stream = new GameBitStream(message);
         try {
-            const packetType = stream.readBits(NetConstants.packetBits);
             const player = socket.getUserData().gameObject;
             if (player === undefined) return;
-
-            switch (packetType) {
-                case PacketType.Input: {
-                    const packet = new InputPacket();
-                    packet.deserialize(stream);
-                    player.direction = packet.direction;
-                    player.setDirty();
-                    break;
-                }
-            }
+            player.processPacket(stream)
         } catch (e) {
             console.warn("Error parsing message:", e);
         }

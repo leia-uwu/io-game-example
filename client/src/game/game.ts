@@ -1,4 +1,4 @@
-import { GameBitStream, NetConstants, ObjectType, PacketType } from "../../../common/src/net";
+import { GameBitStream, NetConstants, ObjectType, Packet, PacketType } from "../../../common/src/net";
 import { Application, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
@@ -7,6 +7,7 @@ import { type GameObject } from "./objects/gameObject";
 import { Player } from "./objects/player";
 import { Camera } from "./camera";
 import { InputManager } from "./inputManager";
+import { InputPacket } from "../../../common/src/packets/inputPacket";
 
 export class Game {
     socket?: WebSocket;
@@ -157,6 +158,13 @@ export class Game {
         }
     }
 
+    sendPacket(packet: Packet) {
+        if (this.socket && this.socket.readyState === this.socket.readyState) {
+            packet.serialize();
+            this.socket.send(packet.stream.buffer.slice(0, packet.stream.index))
+        }
+    }
+
     resize(): void {
         this.camera.resize();
     }
@@ -164,5 +172,10 @@ export class Game {
     render(): void {
         if (!this.running) return;
         this.camera.render();
+
+        const inputPacket = new InputPacket();
+        inputPacket.mouseDown = this.inputManager.isInputDown("Mouse0")
+        inputPacket.direction = this.inputManager.mouseAngle;
+        this.sendPacket(inputPacket)
     }
 }

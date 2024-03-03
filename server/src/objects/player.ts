@@ -2,18 +2,20 @@ import { type WebSocket } from "uWebSockets.js";
 import { GameObject } from "./gameObject";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { ObjectType, type Packet } from "../../../common/src/net";
+import { GameBitStream, NetConstants, ObjectType, PacketType, type Packet } from "../../../common/src/net";
 import { type Game } from "../game";
 import { UpdatePacket, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
 import { Random } from "../../../common/src/utils/random";
 import { MathUtils } from "../../../common/src/utils/math";
+import { InputPacket } from "../../../common/src/packets/inputPacket";
 
 export class Player extends GameObject<ObjectType.Player> {
     readonly type = ObjectType.Player;
     socket: WebSocket<PlayerData>;
     name: string;
     direction = Vec2.new(0, 0);
+    mouseDown = false;
 
     hitbox = new CircleHitbox(1.5);
 
@@ -71,7 +73,9 @@ export class Player extends GameObject<ObjectType.Player> {
     }
 
     tick(): void {
-        this.position = Vec2.sub(this.position, this.direction);
+        if (this.mouseDown) {
+            this.position = Vec2.sub(this.position, this.direction);
+        }
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
         this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
         this.setDirty();
@@ -128,6 +132,20 @@ export class Player extends GameObject<ObjectType.Player> {
         updatePacket.mapDirty = this.firstPacket ?? this.game.mapDirty;
 
         this.sendPacket(updatePacket);
+    }
+
+    processPacket(stream: GameBitStream): void {
+        const packetType = stream.readBits(NetConstants.packetBits);
+        switch (packetType) {
+            case PacketType.Input: {
+                const packet = new InputPacket();
+                packet.deserialize(stream);
+                this.direction = packet.direction;
+                this.mouseDown = packet.mouseDown;
+                this.setDirty();
+                break;
+            }
+        }
     }
 
     get data(): Required<ObjectsNetData[ObjectType.Player]> {

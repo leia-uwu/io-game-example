@@ -1,18 +1,22 @@
 import { type GameBitStream, Packet, PacketType } from "../net";
-import { type Vector } from "../utils/vector";
+import { Vec2, type Vector } from "../utils/vector";
 
 export class InputPacket extends Packet {
     readonly type = PacketType.Input;
     readonly allocBytes = 32;
 
-    direction!: Vector;
+    direction = Vec2.new(0, 0);
+    mouseDown = false;
 
     override serialize(): void {
         super.serialize();
-        this.stream.writeUnit(this.direction, 16);
+        const stream = this.stream;
+        stream.writeBoolean(this.mouseDown);
+        stream.writeUnit(this.direction, 16);
     }
 
     override deserialize(stream: GameBitStream): void {
+        this.mouseDown = stream.readBoolean();
         this.direction = stream.readUnit(16);
     }
 }

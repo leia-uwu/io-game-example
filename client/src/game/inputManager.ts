@@ -44,10 +44,6 @@ export class InputManager {
                 Math.cos(rotation),
                 Math.sin(rotation)
             );
-            const inputPacket = new InputPacket();
-            inputPacket.direction = this.mouseAngle;
-            inputPacket.serialize();
-            this.game.socket?.send(inputPacket.stream.buffer.slice(0, inputPacket.stream.index));
         });
     }
 
@@ -89,7 +85,6 @@ export class InputManager {
 
             return;
         }
-
         this._inputsDown[key] = event.type === "keydown" || event.type === "pointerdown";
     }
 
