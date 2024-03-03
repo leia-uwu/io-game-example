@@ -34,7 +34,7 @@ export class Game {
             resizeTo: window,
             resolution: window.devicePixelRatio ?? 1,
             antialias: true,
-            background: 0x6d5693
+            background: 0x000000
         });
 
         this.pixi.ticker.add(this.render.bind(this));
@@ -135,7 +135,7 @@ export class Game {
             ctx.zIndex = -99;
             this.camera.addObject(ctx);
             ctx.lineStyle({
-                color: 0x000000,
+                color: 0xffffff,
                 alpha: 0.1,
                 width: 2
             });

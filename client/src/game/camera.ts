@@ -51,9 +51,12 @@ export class Camera {
     resize(): void {
         this.width = this.game.pixi.screen.width;
         this.height = this.game.pixi.screen.height;
-        const size = this.height < this.width ? this.width : this.height;
-        const scale = (size / 2560) * (64 / this.zoom);
-        this._container.scale.set(scale);
+
+        const minDim = Math.min(this.width, this.height);
+        const maxDim = Math.max(this.width, this.height);
+        const maxScreenDim = Math.max(minDim * (16 / 9), maxDim);
+
+        this._container.scale.set((maxScreenDim * 0.5) / (this._zoom * Camera.scale));
         this.render();
     }
 
