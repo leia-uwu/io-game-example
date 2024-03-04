@@ -49,7 +49,7 @@ export class InputManager {
             e.preventDefault();
             e.stopImmediatePropagation();
             e.stopPropagation();
-        })
+        });
     }
 
     private _mWheelStopTimer: number | undefined;

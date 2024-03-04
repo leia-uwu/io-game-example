@@ -1,6 +1,5 @@
 import { GameConstants } from "../constants";
 import { type GameBitStream, Packet, PacketType } from "../net";
-import { Vec2, type Vector } from "../utils/vector";
 
 export class JoinPacket extends Packet {
     readonly type = PacketType.Join;
@@ -11,10 +10,10 @@ export class JoinPacket extends Packet {
     override serialize(): void {
         super.serialize();
         const stream = this.stream;
-        stream.writeASCIIString(this.name, GameConstants.nameMaxLength)
+        stream.writeASCIIString(this.name, GameConstants.nameMaxLength);
     }
 
     override deserialize(stream: GameBitStream): void {
-        this.name = stream.readASCIIString(GameConstants.nameMaxLength)
+        this.name = stream.readASCIIString(GameConstants.nameMaxLength);
     }
 }

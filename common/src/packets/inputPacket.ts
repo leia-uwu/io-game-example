@@ -1,5 +1,5 @@
 import { type GameBitStream, Packet, PacketType } from "../net";
-import { Vec2, type Vector } from "../utils/vector";
+import { Vec2 } from "../utils/vector";
 
 export class InputPacket extends Packet {
     readonly type = PacketType.Input;

@@ -15,7 +15,7 @@ import { GameConstants } from "../../../common/src/constants";
 export class Player extends GameObject<ObjectType.Player> {
     readonly type = ObjectType.Player;
     socket: WebSocket<PlayerData>;
-    name: string;
+    name = "";
     direction = Vec2.new(0, 0);
     mouseDown = false;
 
@@ -59,19 +59,12 @@ export class Player extends GameObject<ObjectType.Player> {
         const pos = Random.vector(0, game.width, 0, game.height);
         super(game, pos);
         this.position = pos;
-
         this.socket = socket;
-
-        this.name = socket.getUserData().name;
-
-        socket.getUserData().gameObject = this;
     }
 
     sendPacket(packet: Packet): void {
         packet.serialize();
-        const stream = packet.stream;
-        const buffer = stream.buffer.slice(0, Math.ceil(stream.index / 8));
-        this.socket.send(buffer, true, true);
+        this.socket.send(packet.getBuffer(), true, true);
     }
 
     tick(): void {

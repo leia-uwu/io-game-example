@@ -1,6 +1,7 @@
 import { BitStream } from "@damienvesper/bit-buffer";
 import { type Vector } from "./utils/vector";
 import { GameConstants } from "./constants";
+import { MathUtils } from "./utils/math";
 
 export enum PacketType {
     Join,
@@ -34,9 +35,15 @@ export class GameBitStream extends BitStream {
      * @param bitCount The number of bits to write
      */
     writeFloat(value: number, min: number, max: number, bitCount: number): void {
+        if (bitCount <= 0 || bitCount > 31) {
+            throw new Error(`BitCount ${bitCount} is out of range {1, 31}`);
+        }
+        if (value < min || value > max) {
+            throw new Error(`Value ${value} out of range [${min}, ${max}]`);
+        }
         const range = (1 << bitCount) - 1;
-        const clamped = value < max ? (value > min ? value : min) : max;
-        this.writeBits(((clamped - min) / (max - min)) * range + 0.5, bitCount);
+        const v = (MathUtils.clamp(value, min, max) - min) / (max - min) * range + 0.5;
+        this.writeBits(v, bitCount);
     }
 
     /**
@@ -47,8 +54,11 @@ export class GameBitStream extends BitStream {
      * @return The floating point number.
      */
     readFloat(min: number, max: number, bitCount: number): number {
+        if (bitCount <= 0 || bitCount > 31) {
+            throw new Error(`BitCount ${bitCount} out of range {1, 31}`);
+        }
         const range = (1 << bitCount) - 1;
-        return min + (max - min) * this.readBits(bitCount) / range;
+        return min + this.readBits(bitCount) / range * (max - min);
     }
 
     /**
@@ -120,13 +130,21 @@ export class GameBitStream extends BitStream {
         return this.readVector(0, 0, GameConstants.maxPosition, GameConstants.maxPosition, 16);
     }
 
+    static unitEps = 1.0001;
     /**
     * Write an unit vector to the stream
     * @param vector The Vector to write.
     * @param bitCount The number of bits to write.
     */
     writeUnit(vector: Vector, bitCount: number): void {
-        this.writeVector(vector, -1, -1, 1, 1, bitCount);
+        this.writeVector(
+            vector,
+            -GameBitStream.unitEps,
+            -GameBitStream.unitEps,
+            GameBitStream.unitEps,
+            GameBitStream.unitEps,
+            bitCount
+        );
     }
 
     /**
@@ -135,7 +153,13 @@ export class GameBitStream extends BitStream {
      * @return the unit Vector.
      */
     readUnit(bitCount: number): Vector {
-        return this.readVector(-1, -1, 1, 1, bitCount);
+        return this.readVector(
+            -GameBitStream.unitEps,
+            -GameBitStream.unitEps,
+            GameBitStream.unitEps,
+            GameBitStream.unitEps,
+            bitCount
+        );
     }
 }
 
@@ -149,6 +173,10 @@ export abstract class Packet {
     serialize(): void {
         this.stream = GameBitStream.alloc(this.allocBytes);
         this.stream.writeBits(this.type, NetConstants.packetBits);
+    }
+
+    getBuffer(): ArrayBuffer {
+        return this.stream.buffer.slice(0, this.stream.index);
     }
     abstract deserialize(stream: GameBitStream): void;
 }

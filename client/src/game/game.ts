@@ -1,4 +1,4 @@
-import { GameBitStream, NetConstants, ObjectType, Packet, PacketType } from "../../../common/src/net";
+import { GameBitStream, NetConstants, ObjectType, type Packet, PacketType } from "../../../common/src/net";
 import { Application, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
@@ -160,9 +160,9 @@ export class Game {
     }
 
     sendPacket(packet: Packet) {
-        if (this.socket && this.socket.readyState === this.socket.readyState) {
+        if (this.socket && this.socket.readyState === this.socket.OPEN) {
             packet.serialize();
-            this.socket.send(packet.stream.buffer.slice(0, packet.stream.index))
+            this.socket.send(packet.getBuffer());
         }
     }
 
@@ -175,8 +175,8 @@ export class Game {
         this.camera.render();
 
         const inputPacket = new InputPacket();
-        inputPacket.mouseDown = this.inputManager.isInputDown("Mouse0")
+        inputPacket.mouseDown = this.inputManager.isInputDown("Mouse0");
         inputPacket.direction = this.inputManager.mouseAngle;
-        this.sendPacket(inputPacket)
+        this.sendPacket(inputPacket);
     }
 }

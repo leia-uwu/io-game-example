@@ -26,14 +26,18 @@ app.ws<PlayerData>("/play", {
     idleTimeout: 30,
 
     open(socket) {
+        // disconnect players that didn't send a join packet after 1 second
         setTimeout(() => {
             if (!socket.getUserData().joined) {
                 socket.close();
             }
         }, 1000);
-        game.addPlayer(socket);
+        socket.getUserData().gameObject = game.addPlayer(socket);
     },
 
+    /**
+     * Handle packets
+     */
     message(socket, message) {
         const stream = new GameBitStream(message);
         try {
