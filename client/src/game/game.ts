@@ -8,6 +8,7 @@ import { Player } from "./objects/player";
 import { Camera } from "./camera";
 import { InputManager } from "./inputManager";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
+import { JoinPacket } from "../../../common/src/packets/joinPacket";
 
 export class Game {
     socket?: WebSocket;
@@ -56,13 +57,11 @@ export class Game {
             const stream = new GameBitStream(data);
 
             switch (stream.readBits(NetConstants.packetBits)) {
-                case PacketType.Connected: {
-                    break;
-                }
                 case PacketType.Update: {
                     const packet = new UpdatePacket();
                     packet.deserialize(stream);
                     this.updateFromPacket(packet);
+                    this.running = true;
                     break;
                 }
             }
@@ -71,7 +70,9 @@ export class Game {
         this.socket.onopen = () => {
             getElem("#game").style.display = "";
             getElem("#home").style.display = "none";
-            this.running = true;
+            const joinPacket = new JoinPacket();
+            joinPacket.name = (getElem("#name-input") as HTMLInputElement).value;
+            this.sendPacket(joinPacket);
         };
 
         this.socket.onclose = () => {

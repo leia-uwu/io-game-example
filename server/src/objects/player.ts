@@ -2,13 +2,15 @@ import { type WebSocket } from "uWebSockets.js";
 import { GameObject } from "./gameObject";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { GameBitStream, NetConstants, ObjectType, PacketType, type Packet } from "../../../common/src/net";
+import { type GameBitStream, NetConstants, ObjectType, PacketType, type Packet } from "../../../common/src/net";
 import { type Game } from "../game";
 import { UpdatePacket, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
 import { Random } from "../../../common/src/utils/random";
 import { MathUtils } from "../../../common/src/utils/math";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
+import { JoinPacket } from "../../../common/src/packets/joinPacket";
+import { GameConstants } from "../../../common/src/constants";
 
 export class Player extends GameObject<ObjectType.Player> {
     readonly type = ObjectType.Player;
@@ -137,6 +139,18 @@ export class Player extends GameObject<ObjectType.Player> {
     processPacket(stream: GameBitStream): void {
         const packetType = stream.readBits(NetConstants.packetBits);
         switch (packetType) {
+            case PacketType.Join: {
+                const packet = new JoinPacket();
+                packet.deserialize(stream);
+                this.name = packet.name.trim();
+                if (!this.name) this.name = GameConstants.defaultName;
+                this.socket.getUserData().joined = true;
+                this.game.players.add(this);
+                this.game.grid.addObject(this);
+
+                console.log(`"${this.name}" joined the game`);
+                break;
+            }
             case PacketType.Input: {
                 const packet = new InputPacket();
                 packet.deserialize(stream);

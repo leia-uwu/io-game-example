@@ -31,7 +31,7 @@ export const ObjectSerializations: { [K in ObjectType]: ObjectSerialization<K> }
         },
         serializeFull(stream, data): void {
             this.serializePartial(stream, data);
-            stream.writeUTF8String(data.full.name, GameConstants.nameMaxLength);
+            stream.writeASCIIString(data.full.name, GameConstants.nameMaxLength);
         },
         deserializePartial(stream) {
             return {
@@ -46,7 +46,7 @@ export const ObjectSerializations: { [K in ObjectType]: ObjectSerialization<K> }
             return {
                 ...partial,
                 full: {
-                    name: stream.readUTF8String(GameConstants.nameMaxLength)
+                    name: stream.readASCIIString(GameConstants.nameMaxLength)
                 }
             };
         }

@@ -1,9 +1,8 @@
-import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { Vec2 } from "../../../common/src/utils/vector";
 import { type Game } from "./game";
 
 export class InputManager {
-    private readonly game: Game;
+    readonly game: Game;
 
     private _inputsDown: Record<string, boolean> = {};
 
@@ -45,6 +44,12 @@ export class InputManager {
                 Math.sin(rotation)
             );
         });
+
+        (game.pixi.view as HTMLCanvasElement).addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+        })
     }
 
     private _mWheelStopTimer: number | undefined;

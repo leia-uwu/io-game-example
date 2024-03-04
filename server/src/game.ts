@@ -34,14 +34,13 @@ export class Game {
 
     addPlayer(socket: WebSocket<PlayerData>): Player {
         const player = new Player(this, socket);
-        this.players.add(player);
-        this.grid.addObject(player);
         return player;
     }
 
     removePlayer(player: Player): void {
         this.players.delete(player);
         this.grid.remove(player);
+        console.log(`"${player.name}" left game`);
         this.deletedObjects.add(player.id);
     }
 

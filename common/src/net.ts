@@ -3,7 +3,7 @@ import { type Vector } from "./utils/vector";
 import { GameConstants } from "./constants";
 
 export enum PacketType {
-    Connected,
+    Join,
     Update,
     Input
 }
