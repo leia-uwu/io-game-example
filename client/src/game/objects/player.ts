@@ -11,9 +11,11 @@ export class Player extends GameObject<ObjectType.Player> {
 
     container = new Container();
     image = Sprite.from("./game/player-blue.svg");
-    nameText = new Text("", {
-        align: "center",
-        fill: "white"
+    nameText = new Text({
+        style: {
+            align: "center",
+            fill: "white"
+        }
     });
 
     direction = Vec2.new(0, 0);

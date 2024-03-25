@@ -11,6 +11,7 @@ export class InputPacket extends Packet {
     override serialize(): void {
         super.serialize();
         const stream = this.stream;
+
         stream.writeBoolean(this.mouseDown);
         stream.writeUnit(this.direction, 16);
     }

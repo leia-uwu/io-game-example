@@ -225,7 +225,7 @@ export class RectHitbox extends Hitbox {
         };
     }
 
-    toRectangle(): RectHitbox {
+    toRectangle(): this {
         return this;
     }
 

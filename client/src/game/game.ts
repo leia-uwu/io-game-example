@@ -1,5 +1,5 @@
 import { GameBitStream, NetConstants, ObjectType, type Packet, PacketType } from "../../../common/src/net";
-import { Application, Graphics } from "pixi.js";
+import { Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { ObjectPool } from "../../../common/src/utils/objectPool";
@@ -23,28 +23,39 @@ export class Game {
         return this.objects.get(this.activePlayerID) as Player;
     }
 
-    pixi: Application;
+    camera = new Camera(this);
+    inputManager = new InputManager(this);
 
-    camera: Camera;
-    inputManager: InputManager;
+    mapGraphics = new Graphics({
+        zIndex: -99
+    });
 
-    mapGraphics = new Graphics();
+    pixi = new Application();
 
     constructor() {
-        this.pixi = new Application<HTMLCanvasElement>({
-            view: getElem("#game-canvas") as HTMLCanvasElement,
-            resizeTo: window,
-            resolution: window.devicePixelRatio ?? 1,
-            antialias: true,
-            background: 0x000000
-        });
+        void (async() => {
+            await this.pixi.init({
+                view: getElem("#game-canvas") as HTMLCanvasElement,
+                resizeTo: window,
+                resolution: window.devicePixelRatio ?? 1,
+                antialias: true,
+                preference: "webgl",
+                background: 0x000000
+            });
 
-        this.pixi.ticker.add(this.render.bind(this));
+            this.pixi.ticker.add(this.render.bind(this));
+            this.pixi.renderer.on("resize", this.resize.bind(this));
+            this.pixi.stage.addChild(this.camera.container);
+            this.camera.resize();
 
-        this.camera = new Camera(this);
-        this.inputManager = new InputManager(this);
+            this.pixi.canvas.addEventListener("contextmenu", (e) => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+            });
 
-        this.pixi.renderer.on("resize", this.resize.bind(this));
+            await Assets.load("./game/player-blue.svg");
+        })();
     }
 
     connect(address: string): void {
@@ -134,13 +145,7 @@ export class Game {
         if (packet.mapDirty) {
             const ctx = this.mapGraphics;
             ctx.clear();
-            ctx.zIndex = -99;
             this.camera.addObject(ctx);
-            ctx.lineStyle({
-                color: 0xffffff,
-                alpha: 0.1,
-                width: 2
-            });
 
             const gridSize = 16 * Camera.scale;
             const gridWidth = packet.map.width * Camera.scale;
@@ -155,7 +160,11 @@ export class Game {
                 ctx.lineTo(gridWidth, y);
             }
 
-            ctx.endFill();
+            ctx.stroke({
+                color: 0xffffff,
+                alpha: 0.1,
+                width: 2
+            });
         }
     }
 

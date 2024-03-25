@@ -44,12 +44,6 @@ export class InputManager {
                 Math.sin(rotation)
             );
         });
-
-        (game.pixi.view as HTMLCanvasElement).addEventListener("contextmenu", (e) => {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            e.stopPropagation();
-        });
     }
 
     private _mWheelStopTimer: number | undefined;
