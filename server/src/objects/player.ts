@@ -127,6 +127,7 @@ export class Player extends GameObject<ObjectType.Player> {
         updatePacket.mapDirty = this.firstPacket ?? this.game.mapDirty;
 
         this.sendPacket(updatePacket);
+        this.firstPacket = false;
     }
 
     processPacket(stream: GameBitStream): void {

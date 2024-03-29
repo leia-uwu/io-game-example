@@ -5,15 +5,13 @@ import { type GameObject } from "./objects/gameObject";
 import { Grid } from "./grid";
 import { ObjectPool } from "../../common/src/utils/objectPool";
 import { GameConstants } from "../../common/src/constants";
-
-const TICK_SPEED = 60;
+import NanoTimer from "nanotimer";
 
 export class Game {
     players = new Set<Player>();
 
     dirtyObjects = new ObjectPool<GameObject>();
     fullDirtyObjects = new ObjectPool<GameObject>();
-    deletedObjects = new Set<number>();
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
@@ -28,8 +26,10 @@ export class Game {
         return this._currentId++;
     }
 
+    timer = new NanoTimer();
+
     constructor() {
-        setInterval(this.tick.bind(this), 1000 / TICK_SPEED);
+        this.timer.setInterval(this.tick.bind(this), "", "30m")
     }
 
     addPlayer(socket: WebSocket<PlayerData>): Player {
@@ -41,7 +41,6 @@ export class Game {
         this.players.delete(player);
         this.grid.remove(player);
         console.log(`"${player.name}" left game`);
-        this.deletedObjects.add(player.id);
     }
 
     tick(): void {
@@ -61,7 +60,6 @@ export class Game {
             }
         }
 
-        this.deletedObjects.clear();
         this.dirtyObjects.clear();
         this.fullDirtyObjects.clear();
         this.mapDirty = false;

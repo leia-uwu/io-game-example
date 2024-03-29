@@ -82,7 +82,7 @@ export class Game {
             getElem("#game").style.display = "";
             getElem("#home").style.display = "none";
             const joinPacket = new JoinPacket();
-            joinPacket.name = (getElem("#name-input")).value;
+            joinPacket.name = (getElem<HTMLInputElement>("#name-input")).value;
             this.sendPacket(joinPacket);
         };
 
