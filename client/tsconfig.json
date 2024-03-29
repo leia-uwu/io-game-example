@@ -15,7 +15,7 @@
         "isolatedModules": true,
         "noEmit": true,
         "strictNullChecks": true,
-        "strict": true,
+        "strict": true
     },
     "include": [
         "src",

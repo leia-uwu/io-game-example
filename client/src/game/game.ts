@@ -1,4 +1,4 @@
-import { GameBitStream, NetConstants, ObjectType, type Packet, PacketType } from "../../../common/src/net";
+import { GameBitStream, ObjectType, type Packet, PacketType } from "../../../common/src/net";
 import { Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
@@ -35,7 +35,7 @@ export class Game {
     constructor() {
         void (async() => {
             await this.pixi.init({
-                view: getElem("#game-canvas") as HTMLCanvasElement,
+                canvas: getElem<HTMLCanvasElement>("#game-canvas"),
                 resizeTo: window,
                 resolution: window.devicePixelRatio ?? 1,
                 antialias: true,
@@ -67,7 +67,7 @@ export class Game {
             const data = msg.data as ArrayBuffer;
             const stream = new GameBitStream(data);
 
-            switch (stream.readBits(NetConstants.packetBits)) {
+            switch (stream.readUint8()) {
                 case PacketType.Update: {
                     const packet = new UpdatePacket();
                     packet.deserialize(stream);
@@ -82,7 +82,7 @@ export class Game {
             getElem("#game").style.display = "";
             getElem("#home").style.display = "none";
             const joinPacket = new JoinPacket();
-            joinPacket.name = (getElem("#name-input") as HTMLInputElement).value;
+            joinPacket.name = (getElem("#name-input")).value;
             this.sendPacket(joinPacket);
         };
 

@@ -2,7 +2,7 @@ import { type WebSocket } from "uWebSockets.js";
 import { GameObject } from "./gameObject";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { type GameBitStream, NetConstants, ObjectType, PacketType, type Packet } from "../../../common/src/net";
+import { type GameBitStream, ObjectType, PacketType, type Packet } from "../../../common/src/net";
 import { type Game } from "../game";
 import { UpdatePacket, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
@@ -64,7 +64,7 @@ export class Player extends GameObject<ObjectType.Player> {
 
     sendPacket(packet: Packet): void {
         packet.serialize();
-        this.socket.send(packet.getBuffer(), true, true);
+        this.socket.send(packet.getBuffer(), true, false);
     }
 
     tick(): void {
@@ -130,7 +130,7 @@ export class Player extends GameObject<ObjectType.Player> {
     }
 
     processPacket(stream: GameBitStream): void {
-        const packetType = stream.readBits(NetConstants.packetBits);
+        const packetType = stream.readUint8();
         switch (packetType) {
             case PacketType.Join: {
                 const packet = new JoinPacket();

@@ -1,5 +1,5 @@
 import { GameConstants } from "../constants";
-import { type GameBitStream, NetConstants, ObjectType, Packet, PacketType } from "../net";
+import { type GameBitStream, ObjectType, Packet, PacketType } from "../net";
 import { type Vector } from "../utils/vector";
 
 export interface ObjectsNetData {
@@ -97,19 +97,10 @@ export class UpdatePacket extends Packet {
         const stream = this.stream;
 
         let flags = 0;
-        if (Object.values(this.playerDataDirty).includes(true)) { flags += UpdateFlags.PlayerData; }
-
-        if (this.deletedObjects.length > 0) { flags += UpdateFlags.DeletedObjects; }
-
-        if (this.fullObjects.length > 0) { flags += UpdateFlags.FullObjects; }
-
-        if (this.partialObjects.length > 0) { flags += UpdateFlags.PartialObjects; }
-
-        if (this.mapDirty) { flags += UpdateFlags.Map; }
-
+        const flagIdx = this.stream.index;
         stream.writeUint8(flags);
 
-        if (flags & UpdateFlags.PlayerData) {
+        if (Object.values(this.playerDataDirty).includes(true)) {
             stream.writeBoolean(this.playerDataDirty.id);
             if (this.playerDataDirty.id) {
                 stream.writeUint16(this.playerData.id);
@@ -119,39 +110,54 @@ export class UpdatePacket extends Packet {
             if (this.playerDataDirty.zoom) {
                 stream.writeUint8(this.playerData.zoom);
             }
+
+            flags |= UpdateFlags.PlayerData;
         }
 
-        if (flags & UpdateFlags.DeletedObjects) {
+        if (this.deletedObjects.length) {
             stream.writeUint16(this.deletedObjects.length);
             for (const id of this.deletedObjects) {
                 stream.writeUint16(id);
             }
+
+            flags |= UpdateFlags.DeletedObjects;
         }
 
-        if (flags & UpdateFlags.FullObjects) {
+        if (this.fullObjects.length) {
             stream.writeUint16(this.fullObjects.length);
 
             for (const object of this.fullObjects) {
                 stream.writeUint16(object.id);
-                stream.writeBits(object.type, NetConstants.objectTypeBits);
+                stream.writeUint8(object.type);
                 ObjectSerializations[object.type].serializeFull(stream, object.data);
             }
+
+            flags |= UpdateFlags.FullObjects;
         }
 
-        if (flags & UpdateFlags.PartialObjects) {
+        if (this.partialObjects.length) {
             stream.writeUint16(this.partialObjects.length);
 
             for (const object of this.partialObjects) {
                 stream.writeUint16(object.id);
-                stream.writeBits(object.type, NetConstants.objectTypeBits);
+                stream.writeUint8(object.type);
                 ObjectSerializations[object.type].serializePartial(stream, object.data);
             }
+
+            flags |= UpdateFlags.PartialObjects;
         }
 
-        if (flags & UpdateFlags.Map) {
+        if (this.mapDirty) {
             stream.writeUint16(this.map.width);
             stream.writeUint16(this.map.height);
+
+            flags |= UpdateFlags.Map;
         }
+
+        const idx = stream.index;
+        stream.index = flagIdx;
+        stream.writeUint8(flags);
+        stream.index = idx;
     }
 
     override deserialize(stream: GameBitStream): void {
@@ -181,7 +187,7 @@ export class UpdatePacket extends Packet {
 
             for (let i = 0; i < count; i++) {
                 const id = stream.readUint16();
-                const objectType = stream.readBits(NetConstants.objectTypeBits) as ObjectType;
+                const objectType = stream.readUint8() as ObjectType;
                 const data = ObjectSerializations[objectType].deserializeFull(stream);
                 this.fullObjects.push({
                     id,
@@ -196,7 +202,7 @@ export class UpdatePacket extends Packet {
 
             for (let i = 0; i < count; i++) {
                 const id = stream.readUint16();
-                const objectType = stream.readBits(NetConstants.objectTypeBits) as ObjectType;
+                const objectType = stream.readUint8() as ObjectType;
                 const data = ObjectSerializations[objectType].deserializePartial(stream);
                 this.partialObjects.push({
                     id,

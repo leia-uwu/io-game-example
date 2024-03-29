@@ -55,7 +55,6 @@ export class Game {
         }
 
         // reset stuff
-
         for (const player of this.players) {
             for (const key in player.dirty) {
                 player.dirty[key as keyof Player["dirty"]] = false;

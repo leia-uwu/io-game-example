@@ -13,15 +13,6 @@ export enum ObjectType {
     Player
 }
 
-function calculateEnumBits(e: object): number {
-    return Math.ceil(Object.keys(e).length / 2);
-}
-
-export const NetConstants = {
-    packetBits: calculateEnumBits(PacketType),
-    objectTypeBits: calculateEnumBits(ObjectType)
-};
-
 export class GameBitStream extends BitStream {
     static alloc(size: number): GameBitStream {
         return new GameBitStream(new ArrayBuffer(size));
@@ -172,7 +163,7 @@ export abstract class Packet {
 
     serialize(): void {
         this.stream = GameBitStream.alloc(this.allocBytes);
-        this.stream.writeBits(this.type, NetConstants.packetBits);
+        this.stream.writeUint8(this.type);
     }
 
     getBuffer(): ArrayBuffer {
