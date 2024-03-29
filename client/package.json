@@ -2,10 +2,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite --config src/vite.config.ts",
-        "build": "tsc && vite --config src/vite.config.ts build",
-        "preview": "vite --config src/vite.config.ts preview",
-        "lint": "eslint . --fix --ext .js,.ts"
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "devDependencies": {
         "sass": "^1.72.0",
@@ -13,6 +12,6 @@
         "vite": "^4.5.3"
     },
     "dependencies": {
-        "pixi.js": "^8.0.3"
+        "pixi.js": "^8.0.4"
     }
 }

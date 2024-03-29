@@ -1,11 +1,6 @@
 {
     "private": true,
-    "scripts": {
-        "lint": "eslint . --fix --ext .ts"
-    },
-    "keywords": [],
-    "license": "GPL-3.0",
     "dependencies": {
-        "@damienvesper/bit-buffer": "^1.0.1"
+        "bit-buffer": "^0.2.5"
     }
 }

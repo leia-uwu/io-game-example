@@ -1,4 +1,4 @@
-import { BitStream } from "@damienvesper/bit-buffer";
+import { BitStream } from "bit-buffer";
 import { type Vector } from "./utils/vector";
 import { GameConstants } from "./constants";
 import { MathUtils } from "./utils/math";
