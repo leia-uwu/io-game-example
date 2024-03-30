@@ -56,7 +56,7 @@ export class Game {
         this.now = Date.now();
 
         // update entities
-        for (const [_, entity] of this.grid.entities) {
+        for (const entity of this.grid.entities.values()) {
             entity.tick();
         }
 

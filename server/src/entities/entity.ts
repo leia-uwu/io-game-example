@@ -24,7 +24,7 @@ export abstract class ServerEntity<T extends EntityType = EntityType> {
         this._position = pos;
     }
 
-    abstract tick(): void
+    abstract tick(): void;
 
     init(): void {
         // + 3 for entity id (2 bytes) and entity type (1 byte)

@@ -12,7 +12,7 @@ export interface EntitiesNetData {
         full?: {
             health: number
         }
-    },
+    }
     [EntityType.Projectile]: {
         position: Vector
         full?: {
@@ -58,21 +58,21 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         partialSize: 6,
         fullSize: 4,
         serializePartial(stream, data) {
-            stream.writePosition(data.position)
+            stream.writePosition(data.position);
         },
         serializeFull(stream, data) {
-            stream.writeUnit(data.direction, 16)
+            stream.writeUnit(data.direction, 16);
         },
         deserializePartial(stream) {
             return {
                 position: stream.readPosition()
-            }
+            };
         },
         deserializeFull(stream) {
             return {
                 direction: stream.readUnit(16)
-            }
-        },
+            };
+        }
     }
 };
 

@@ -127,10 +127,16 @@ export class Game {
         this.camera.clear();
     }
 
+    lastUpdateTime = 0;
+    serverDt = 0;
+
     /**
      * Process a game update packet
      */
     updateFromPacket(packet: UpdatePacket): void {
+        this.serverDt = (Date.now() - this.lastUpdateTime) / 1000;
+        this.lastUpdateTime = Date.now();
+
         if (packet.playerDataDirty.id) {
             this.activePlayerID = packet.playerData.id;
         }
@@ -153,20 +159,21 @@ export class Game {
 
         for (const entityData of packet.fullEntities) {
             let entity = this.entities.get(entityData.id);
-
+            let isNew = false;
             if (!entity) {
+                isNew = true;
                 switch (entityData.type) {
                     case EntityType.Player: {
                         entity = new Player(this, entityData.id);
                         break;
                     }
                     case EntityType.Projectile: {
-                        entity = new Projectile(this, entityData.id)
+                        entity = new Projectile(this, entityData.id);
                     }
                 }
                 this.entities.add(entity);
             }
-            entity.updateFromData(entityData.data);
+            entity.updateFromData(entityData.data, isNew);
         }
 
         for (const entityPartialData of packet.partialEntities) {
@@ -176,7 +183,7 @@ export class Game {
                 console.warn(`Unknown partial dirty entity with ID ${entityPartialData.id}`);
                 continue;
             }
-            entity.updateFromData(entityPartialData.data);
+            entity.updateFromData(entityPartialData.data, false);
         }
 
         if (packet.mapDirty) {
@@ -217,8 +224,18 @@ export class Game {
         this.camera.resize();
     }
 
+    dt = Date.now();
+
     render(): void {
         if (!this.running) return;
+
+        const dt = (Date.now() - this.dt) / 1000;
+        this.dt = Date.now();
+
+        for (const entity of this.entities) {
+            entity.render(dt);
+        }
+
         this.camera.render();
 
         const inputPacket = new InputPacket();

@@ -1,5 +1,5 @@
-import { Collision, CollisionResponse, LineIntersection } from "./collision"
-import { Vec2, Vector } from "./vector"
+import { Collision, type CollisionResponse, type LineIntersection } from "./collision";
+import { Vec2, type Vector } from "./vector";
 
 export enum HitboxType {
     Circle,
@@ -100,7 +100,7 @@ export class CircleHitbox extends BaseHitbox {
             case HitboxType.Circle:
                 return Collision.circleCircleIntersection(this.position, this.radius, that.position, that.radius);
             case HitboxType.Rect:
-                return Collision.rectCircleIntersection(that.min, that.max, this.position, this.radius)
+                return Collision.rectCircleIntersection(that.min, that.max, this.position, this.radius);
         }
     }
 
@@ -169,6 +169,7 @@ export class RectHitbox extends BaseHitbox {
             Vec2.add(pos, size)
         );
     }
+
     /**
      * Creates a new rectangle hitbox from the bounds of a circle
      */
@@ -190,7 +191,7 @@ export class RectHitbox extends BaseHitbox {
     override getIntersection(that: Hitbox) {
         switch (that.type) {
             case HitboxType.Circle:
-                return Collision.rectCircleIntersection(this.min, this.max, that.position, that.radius)
+                return Collision.rectCircleIntersection(this.min, this.max, that.position, that.radius);
             case HitboxType.Rect:
                 return Collision.rectRectIntersection(this.min, this.max, that.min, that.max);
         }
@@ -220,4 +221,3 @@ export class RectHitbox extends BaseHitbox {
         return point.x > this.min.x && point.y > this.min.y && point.x < this.max.x && point.y < this.max.y;
     }
 }
-

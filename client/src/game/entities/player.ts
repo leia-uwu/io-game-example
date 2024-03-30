@@ -27,6 +27,7 @@ export class Player extends ClientEntity<EntityType.Player> {
     healthBar = new Graphics();
 
     direction = Vec2.new(0, 0);
+    oldDirection = Vec2.new(0, 0);
 
     constructor(game: Game, id: number) {
         super(game, id);
@@ -49,18 +50,13 @@ export class Player extends ClientEntity<EntityType.Player> {
         this.redrawHealthBar();
     }
 
-    updateFromData(data: EntitiesNetData[EntityType.Player]): void {
+    override updateFromData(data: EntitiesNetData[EntityType.Player], isNew: boolean): void {
+        this.interpolationTick = 0;
+        this.oldPosition = isNew ? data.position : Vec2.clone(this.position);
         this.position = data.position;
+        this.oldDirection = Vec2.clone(this.direction);
         this.direction = data.direction;
 
-        this.container.position.copyFrom(Camera.vecToScreen(this.position));
-        this.staticContainer.position.copyFrom(this.container.position);
-
-        this.container.rotation = Math.atan2(this.direction.y, this.direction.x);
-
-        if (this.id === this.game.activePlayerID) {
-            this.game.camera.position = this.container.position;
-        }
         if (data.full) {
             if (this.health !== data.full.health) {
                 this.health = data.full.health;
@@ -83,7 +79,23 @@ export class Player extends ClientEntity<EntityType.Player> {
             .fill("green");
     }
 
-    destroy(): void {
+    override render(dt: number): void {
+        super.render(dt);
+        const pos = Camera.vecToScreen(
+            Vec2.lerp(this.oldPosition, this.position, this.interpolationFactor)
+        );
+        this.container.position.copyFrom(pos);
+        this.staticContainer.position.copyFrom(pos);
+
+        const direction = Vec2.lerp(this.oldDirection, this.direction, this.interpolationFactor);
+        this.container.rotation = Math.atan2(direction.y, direction.x);
+
+        if (this.id === this.game.activePlayerID) {
+            this.game.camera.position = this.container.position;
+        }
+    }
+
+    override destroy(): void {
         this.container.destroy({
             children: true
         });

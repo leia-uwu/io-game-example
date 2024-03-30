@@ -1,13 +1,13 @@
 import { EntityType } from "../../../common/src/net";
-import { EntitiesNetData } from "../../../common/src/packets/updatePacket";
+import { type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox } from "../../../common/src/utils/hitbox";
 import { MathUtils } from "../../../common/src/utils/math";
-import { Vec2, Vector } from "../../../common/src/utils/vector";
-import { Game } from "../game";
+import { Vec2, type Vector } from "../../../common/src/utils/vector";
+import { type Game } from "../game";
 import { ServerEntity } from "./entity";
 
 export class Projectile extends ServerEntity {
-    readonly type = EntityType.Projectile
+    readonly type = EntityType.Projectile;
     hitbox: CircleHitbox;
     direction: Vector;
 
@@ -25,7 +25,7 @@ export class Projectile extends ServerEntity {
 
     constructor(game: Game, position: Vector, direction: Vector) {
         super(game, position);
-        this.direction = direction
+        this.direction = direction;
         this.hitbox = new CircleHitbox(1, position);
     }
 
@@ -44,7 +44,7 @@ export class Projectile extends ServerEntity {
 
         for (const player of this.game.players) {
             if (player.hitbox.collidesWith(this.hitbox)) {
-                player.damage(15)
+                player.damage(15);
                 this.destroy();
             }
         }
@@ -55,12 +55,13 @@ export class Projectile extends ServerEntity {
     destroy() {
         this.game.grid.remove(this);
     }
+
     get data(): Required<EntitiesNetData[EntityType.Projectile]> {
         return {
             position: this.position,
             full: {
                 direction: this.direction
             }
-        }
+        };
     }
 }

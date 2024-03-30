@@ -171,7 +171,7 @@ export const Vec2 = {
      * @param end The end Vector
      * @param interpFactor The interpolation factor ranging from 0 to 1
      */
-    vecLerp(start: Vector, end: Vector, interpFactor: number): Vector {
+    lerp(start: Vector, end: Vector, interpFactor: number): Vector {
         return Vec2.add(Vec2.mul(start, 1 - interpFactor), Vec2.mul(end, interpFactor));
     },
 
@@ -193,5 +193,5 @@ export const Vec2 = {
      */
     equals(a: Vector, b: Vector, epsilon = 0.001): boolean {
         return Math.abs(a.x - b.x) <= epsilon && Math.abs(a.y - b.y) <= epsilon;
-    },
+    }
 };

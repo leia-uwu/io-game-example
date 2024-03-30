@@ -96,7 +96,7 @@ export class Player extends ServerEntity<EntityType.Player> {
             if (player !== this) {
                 const collision = this.hitbox.getIntersection(player.hitbox);
                 if (collision) {
-                    this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen))
+                    this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen));
                 }
             }
         }
@@ -140,8 +140,8 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         for (const entity of this.game.fullDirtyEntities) {
             if (newVisibleEntities.has(entity) &&
-                !updatePacket.serverFullEntities.includes(entity)
-                && !updatePacket.deletedEntities.includes(entity.id)) {
+                !updatePacket.serverFullEntities.includes(entity) &&
+                !updatePacket.deletedEntities.includes(entity.id)) {
                 updatePacket.serverFullEntities.push(entity);
             }
         }
