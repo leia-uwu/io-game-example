@@ -1,19 +1,20 @@
 import { type WebSocket } from "uWebSockets.js";
-import { Player } from "./objects/player";
+import { Player } from "./entities/player";
 import { type PlayerData } from "./server";
-import { type GameObject } from "./objects/gameObject";
+import { type ServerEntity } from "./entities/entity";
 import { Grid } from "./grid";
-import { ObjectPool } from "../../common/src/utils/objectPool";
+import { EntityPool } from "../../common/src/utils/entityPool";
 import { GameConstants } from "../../common/src/constants";
 import NanoTimer from "nanotimer";
 
 export class Game {
-    players = new Set<Player>();
+    players = new EntityPool<Player>();
+
     newPlayers: Player[] = [];
     deletedPlayers: number[] = [];
 
-    dirtyObjects = new ObjectPool<GameObject>();
-    fullDirtyObjects = new ObjectPool<GameObject>();
+    partialDirtyEntities = new Set<ServerEntity>();
+    fullDirtyEntities = new Set<ServerEntity>();
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
@@ -52,20 +53,20 @@ export class Game {
             player.tick();
         }
 
-        // Cache object serializations
-        for (const obj of this.dirtyObjects) {
-            if (this.fullDirtyObjects.has(obj)) {
-                this.dirtyObjects.delete(obj);
+        // Cache entity serializations
+        for (const entity of this.partialDirtyEntities) {
+            if (this.fullDirtyEntities.has(entity)) {
+                this.partialDirtyEntities.delete(entity);
                 continue;
             }
-            obj.serializePartial();
+            entity.serializePartial();
         }
 
-        for (const obj of this.fullDirtyObjects) {
-            obj.serializeFull();
+        for (const entity of this.fullDirtyEntities) {
+            entity.serializeFull();
         }
 
-        // Second loop over players: calculate visible objects & send updates
+        // Second loop over players: calculate visible entities & send updates
         for (const player of this.players) {
             player.sendPackets();
         }
@@ -77,8 +78,8 @@ export class Game {
             }
         }
 
-        this.dirtyObjects.clear();
-        this.fullDirtyObjects.clear();
+        this.partialDirtyEntities.clear();
+        this.fullDirtyEntities.clear();
         this.newPlayers.length = 0;
         this.deletedPlayers.length = 0;
         this.mapDirty = false;

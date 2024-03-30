@@ -1,6 +1,6 @@
 import { App, type HttpResponse, SSLApp } from "uWebSockets.js";
 import { GameBitStream } from "../../common/src/net";
-import { type Player } from "./objects/player";
+import { type Player } from "./entities/player";
 import { Game } from "./game";
 import { Config } from "./config";
 
@@ -15,9 +15,9 @@ const app = Config.ssl
 export interface PlayerData {
     joined: boolean
     /**
-     * The player socket game object
+     * The player socket game entity
      */
-    gameObject?: Player
+    entity?: Player
 }
 
 app.listen(Config.host, Config.port, () => {
@@ -57,7 +57,7 @@ app.ws<PlayerData>("/play", {
                 socket.close();
             }
         }, 1000);
-        socket.getUserData().gameObject = game.addPlayer(socket);
+        socket.getUserData().entity = game.addPlayer(socket);
     },
 
     /**
@@ -66,7 +66,7 @@ app.ws<PlayerData>("/play", {
     message(socket, message) {
         const stream = new GameBitStream(message);
         try {
-            const player = socket.getUserData().gameObject;
+            const player = socket.getUserData().entity;
             if (player === undefined) return;
             player.processPacket(stream);
         } catch (e) {
@@ -76,6 +76,6 @@ app.ws<PlayerData>("/play", {
 
     close(socket) {
         const player = socket.getUserData();
-        if (player.gameObject) game.removePlayer(player.gameObject);
+        if (player.entity) game.removePlayer(player.entity);
     }
 });

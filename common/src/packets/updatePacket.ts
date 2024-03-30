@@ -1,9 +1,9 @@
 import { GameConstants } from "../constants";
-import { type GameBitStream, ObjectType, Packet, PacketType } from "../net";
+import { type GameBitStream, EntityType, Packet, PacketType } from "../net";
 import { type Vector } from "../utils/vector";
 
-export interface ObjectsNetData {
-    [ObjectType.Player]: {
+export interface EntitiesNetData {
+    [EntityType.Player]: {
         // Partial data should be used for data that changes often
         position: Vector
         direction: Vector
@@ -15,18 +15,18 @@ export interface ObjectsNetData {
     }
 }
 
-interface ObjectSerialization<T extends ObjectType> {
-    // how many bytes to alloc for the object serialized data cache
+interface EntitySerialization<T extends EntityType> {
+    // how many bytes to alloc for the entity serialized data cache
     partialSize: number
     fullSize: number
-    serializePartial: (stream: GameBitStream, data: ObjectsNetData[T]) => void
-    serializeFull: (stream: GameBitStream, data: Required<ObjectsNetData[T]>["full"]) => void
-    deserializePartial: (stream: GameBitStream) => ObjectsNetData[T]
-    deserializeFull: (stream: GameBitStream) => Required<ObjectsNetData[T]>["full"]
+    serializePartial: (stream: GameBitStream, data: EntitiesNetData[T]) => void
+    serializeFull: (stream: GameBitStream, data: Required<EntitiesNetData[T]>["full"]) => void
+    deserializePartial: (stream: GameBitStream) => EntitiesNetData[T]
+    deserializeFull: (stream: GameBitStream) => Required<EntitiesNetData[T]>["full"]
 }
 
-export const ObjectSerializations: { [K in ObjectType]: ObjectSerialization<K> } = {
-    [ObjectType.Player]: {
+export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> } = {
+    [EntityType.Player]: {
         partialSize: 8,
         fullSize: 2,
         serializePartial(stream, data): void {
@@ -51,16 +51,16 @@ export const ObjectSerializations: { [K in ObjectType]: ObjectSerialization<K> }
     }
 };
 
-interface GameObject {
+interface Entity {
     id: number
-    type: ObjectType
-    data: ObjectsNetData[GameObject["type"]]
+    type: EntityType
+    data: EntitiesNetData[Entity["type"]]
 }
 
 enum UpdateFlags {
-    DeletedObjects = 1 << 0,
-    FullObjects = 1 << 1,
-    PartialObjects = 1 << 2,
+    DeletedEntities = 1 << 0,
+    FullEntities = 1 << 1,
+    PartialEntities = 1 << 2,
     NewPlayers = 1 << 3,
     DeletedPlayers = 1 << 4,
     PlayerData = 1 << 5,
@@ -71,9 +71,9 @@ export class UpdatePacket extends Packet {
     readonly type = PacketType.Update;
     readonly allocBytes = 2 ** 16;
 
-    deletedObjects: number[] = [];
-    partialObjects: GameObject[] = [];
-    fullObjects: Array<GameObject & { data: Required<ObjectsNetData[GameObject["type"]]> }> = [];
+    deletedEntities: number[] = [];
+    partialEntities: Entity[] = [];
+    fullEntities: Array<Entity & { data: Required<EntitiesNetData[Entity["type"]]> }> = [];
 
     newPlayers: Array<{
         name: string
@@ -98,12 +98,12 @@ export class UpdatePacket extends Packet {
         height: 0
     };
 
-    // server side cached object serializations
-    serverPartialObjs: Array<{
+    // server side cached entity serializations
+    serverPartialEntities: Array<{
         partialStream: GameBitStream
     }> = [];
 
-    serverFullObjs: Array<{
+    serverFullEntities: Array<{
         partialStream: GameBitStream
         fullStream: GameBitStream
     }> = [];
@@ -116,29 +116,29 @@ export class UpdatePacket extends Packet {
         const flagIdx = this.stream.index;
         stream.writeUint8(flags);
 
-        if (this.deletedObjects.length) {
-            stream.writeArray(this.deletedObjects, 16, (id) => {
+        if (this.deletedEntities.length) {
+            stream.writeArray(this.deletedEntities, 16, (id) => {
                 stream.writeUint16(id);
             });
 
-            flags |= UpdateFlags.DeletedObjects;
+            flags |= UpdateFlags.DeletedEntities;
         }
 
-        if (this.serverFullObjs.length) {
-            stream.writeArray(this.serverFullObjs, 16, (obj) => {
-                stream.writeBytes(obj.partialStream, 0, obj.partialStream.byteIndex);
-                stream.writeBytes(obj.fullStream, 0, obj.fullStream.byteIndex);
+        if (this.serverFullEntities.length) {
+            stream.writeArray(this.serverFullEntities, 16, (entity) => {
+                stream.writeBytes(entity.partialStream, 0, entity.partialStream.byteIndex);
+                stream.writeBytes(entity.fullStream, 0, entity.fullStream.byteIndex);
             });
 
-            flags |= UpdateFlags.FullObjects;
+            flags |= UpdateFlags.FullEntities;
         }
 
-        if (this.serverPartialObjs.length) {
-            stream.writeArray(this.serverPartialObjs, 16, (obj) => {
-                stream.writeBytes(obj.partialStream, 0, obj.partialStream.byteIndex);
+        if (this.serverPartialEntities.length) {
+            stream.writeArray(this.serverPartialEntities, 16, (entity) => {
+                stream.writeBytes(entity.partialStream, 0, entity.partialStream.byteIndex);
             });
 
-            flags |= UpdateFlags.PartialObjects;
+            flags |= UpdateFlags.PartialEntities;
         }
 
         if (this.newPlayers.length) {
@@ -189,38 +189,38 @@ export class UpdatePacket extends Packet {
     override deserialize(stream: GameBitStream): void {
         const flags = stream.readUint8();
 
-        if (flags & UpdateFlags.DeletedObjects) {
+        if (flags & UpdateFlags.DeletedEntities) {
             const count = stream.readUint16();
             for (let i = 0; i < count; i++) {
-                this.deletedObjects.push(stream.readUint16());
+                this.deletedEntities.push(stream.readUint16());
             }
         }
 
-        if (flags & UpdateFlags.FullObjects) {
-            stream.readArray(this.fullObjects, 16, () => {
+        if (flags & UpdateFlags.FullEntities) {
+            stream.readArray(this.fullEntities, 16, () => {
                 const id = stream.readUint16();
-                const objectType = stream.readUint8() as ObjectType;
-                const data = ObjectSerializations[objectType].deserializePartial(stream);
+                const entityType = stream.readUint8() as EntityType;
+                const data = EntitySerializations[entityType].deserializePartial(stream);
                 stream.readAlignToNextByte();
-                data.full = ObjectSerializations[objectType].deserializeFull(stream);
+                data.full = EntitySerializations[entityType].deserializeFull(stream);
                 stream.readAlignToNextByte();
                 return {
                     id,
-                    type: objectType,
+                    type: entityType,
                     data
                 };
             });
         }
 
-        if (flags & UpdateFlags.PartialObjects) {
-            stream.readArray(this.partialObjects, 16, () => {
+        if (flags & UpdateFlags.PartialEntities) {
+            stream.readArray(this.partialEntities, 16, () => {
                 const id = stream.readUint16();
-                const objectType = stream.readUint8() as ObjectType;
-                const data = ObjectSerializations[objectType].deserializePartial(stream);
+                const entityType = stream.readUint8() as EntityType;
+                const data = EntitySerializations[entityType].deserializePartial(stream);
                 stream.readAlignToNextByte();
                 return {
                     id,
-                    type: objectType,
+                    type: entityType,
                     data
                 };
             });

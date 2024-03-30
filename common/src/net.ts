@@ -9,7 +9,7 @@ export enum PacketType {
     Input
 }
 
-export enum ObjectType {
+export enum EntityType {
     Player
 }
 

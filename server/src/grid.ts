@@ -1,25 +1,25 @@
 import { type Hitbox, RectHitbox } from "../../common/src/utils/hitbox";
 import { MathUtils } from "../../common/src/utils/math";
 import { Vec2, type Vector } from "../../common/src/utils/vector";
-import { type GameObject } from "./objects/gameObject";
+import { type ServerEntity } from "./entities/entity";
 
 /**
- * A Grid to filter collision detection of game objects
+ * A Grid to filter collision detection of game entities
  */
 export class Grid {
     readonly width: number;
     readonly height: number;
     readonly cellSize = 16;
 
-    //                        X     Y     Object ID
+    //                        X     Y     Entity ID
     //                      __^__ __^__     ___^__
-    private readonly _grid: Array<Array<Map<number, GameObject>>>;
+    private readonly _grid: Array<Array<Map<number, ServerEntity>>>;
 
-    // store the cells each game object is occupying
-    // so removing the object from the grid is faster
-    private readonly _objectsCells = new Map<number, Vector[]>();
+    // store the cells each entity is occupying
+    // so removing the entity from the grid is faster
+    private readonly _entitiesCells = new Map<number, Vector[]>();
 
-    private readonly objects = new Map<number, GameObject>();
+    private readonly entities = new Map<number, ServerEntity>();
 
     constructor(width: number, height: number) {
         this.width = Math.floor(width / this.cellSize);
@@ -32,85 +32,85 @@ export class Grid {
     }
 
     getById(id: number) {
-        return this.objects.get(id);
+        return this.entities.get(id);
     }
 
-    addObject(obj: GameObject): void {
-        this.objects.set(obj.id, obj);
-        obj.init();
-        this.updateObject(obj);
+    addEntity(entity: ServerEntity): void {
+        this.entities.set(entity.id, entity);
+        entity.init();
+        this.updateEntity(entity);
     }
 
     /**
-     * Add an object to the grid system
+     * Add a entity to the grid system
      */
-    updateObject(obj: GameObject): void {
-        this.removeFromGrid(obj);
+    updateEntity(entity: ServerEntity): void {
+        this.removeFromGrid(entity);
 
         const cells: Vector[] = [];
 
-        const rect = obj.hitbox.toRectangle();
+        const rect = entity.hitbox.toRectangle();
         // Get the bounds of the hitbox
         // Round it to the grid cells
-        const min = this._roundToCells(Vec2.add(rect.min, obj.position));
-        const max = this._roundToCells(Vec2.add(rect.max, obj.position));
+        const min = this._roundToCells(Vec2.add(rect.min, entity.position));
+        const max = this._roundToCells(Vec2.add(rect.max, entity.position));
 
         // Add it to all grid cells that it intersects
         for (let x = min.x; x <= max.x; x++) {
             const xRow = this._grid[x];
             for (let y = min.y; y <= max.y; y++) {
-                xRow[y].set(obj.id, obj);
+                xRow[y].set(entity.id, entity);
                 cells.push(Vec2.new(x, y));
             }
         }
-        // Store the cells this object is occupying
-        this._objectsCells.set(obj.id, cells);
+        // Store the cells this entity is occupying
+        this._entitiesCells.set(entity.id, cells);
     }
 
-    remove(obj: GameObject): void {
-        this.objects.delete(obj.id);
-        this.removeFromGrid(obj);
+    remove(entity: ServerEntity): void {
+        this.entities.delete(entity.id);
+        this.removeFromGrid(entity);
     }
 
     /**
-     * Remove an object from the grid system
+     * Remove a entity from the grid system
      */
-    removeFromGrid(obj: GameObject): void {
-        const cells = this._objectsCells.get(obj.id);
+    removeFromGrid(entity: ServerEntity): void {
+        const cells = this._entitiesCells.get(entity.id);
         if (!cells) return;
 
         for (const cell of cells) {
-            this._grid[cell.x][cell.y].delete(obj.id);
+            this._grid[cell.x][cell.y].delete(entity.id);
         }
-        this._objectsCells.delete(obj.id);
+        this._entitiesCells.delete(entity.id);
     }
 
     /**
-     * Get all objects near this Hitbox
+     * Get all entities near this Hitbox
      * This transforms the Hitbox into a rectangle
-     * and gets all objects intersecting it after rounding it to grid cells
+     * and gets all entities intersecting it after rounding it to grid cells
      * @param Hitbox The Hitbox
-     * @return A set with the objects near this Hitbox
+     * @return A set with the entities near this Hitbox
      */
-    intersectHitbox(hitbox: Hitbox): Set<GameObject> {
+    intersectHitbox(hitbox: Hitbox): Set<ServerEntity> {
         const rect = hitbox.toRectangle();
 
         const min = this._roundToCells(rect.min);
         const max = this._roundToCells(rect.max);
 
-        const objects = new Set<GameObject>();
+        const entities = new Set<ServerEntity>();
 
         for (let x = min.x; x <= max.x; x++) {
             const xRow = this._grid[x];
             for (let y = min.y; y <= max.y; y++) {
-                const objectsMap = xRow[y];
-                for (const object of objectsMap.values()) {
-                    objects.add(object);
+                const entityMap = xRow[y];
+                for (const entity of entityMap.values()) {
+                    entities.add(entity);
                 }
             }
         }
 
-        return objects;
+        return entities;
     }
 
     intersectPos(pos: Vector) {

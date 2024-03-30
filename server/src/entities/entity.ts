@@ -1,10 +1,10 @@
-import { GameBitStream, type ObjectType } from "../../../common/src/net";
-import { ObjectSerializations, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
+import { GameBitStream, type EntityType } from "../../../common/src/net";
+import { EntitySerializations, type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { type Hitbox } from "../../../common/src/utils/hitbox";
 import { type Vector } from "../../../common/src/utils/vector";
 import { type Game } from "../game";
 
-export abstract class GameObject<T extends ObjectType = ObjectType> {
+export abstract class ServerEntity<T extends EntityType = EntityType> {
     abstract type: T;
     game: Game;
     id: number;
@@ -25,9 +25,9 @@ export abstract class GameObject<T extends ObjectType = ObjectType> {
     }
 
     init(): void {
-        // + 3 for object id (2 bytes) and object type (1 byte)
-        this.partialStream = GameBitStream.alloc(ObjectSerializations[this.type].partialSize + 3);
-        this.fullStream = GameBitStream.alloc(ObjectSerializations[this.type].fullSize);
+        // + 3 for entity id (2 bytes) and entity type (1 byte)
+        this.partialStream = GameBitStream.alloc(EntitySerializations[this.type].partialSize + 3);
+        this.fullStream = GameBitStream.alloc(EntitySerializations[this.type].fullSize);
         this.serializeFull();
     }
 
@@ -35,24 +35,24 @@ export abstract class GameObject<T extends ObjectType = ObjectType> {
         this.partialStream.index = 0;
         this.partialStream.writeUint16(this.id);
         this.partialStream.writeUint8(this.type);
-        ObjectSerializations[this.type].serializePartial(this.partialStream, this.data);
+        EntitySerializations[this.type].serializePartial(this.partialStream, this.data);
         this.partialStream.writeAlignToNextByte();
     }
 
     serializeFull(): void {
         this.serializePartial();
         this.fullStream.index = 0;
-        ObjectSerializations[this.type].serializeFull(this.fullStream, this.data.full);
+        EntitySerializations[this.type].serializeFull(this.fullStream, this.data.full);
         this.fullStream.writeAlignToNextByte();
     }
 
     setDirty(): void {
-        this.game.dirtyObjects.add(this);
+        this.game.partialDirtyEntities.add(this);
     }
 
     setFullDirty(): void {
-        this.game.fullDirtyObjects.add(this);
+        this.game.fullDirtyEntities.add(this);
     }
 
-    abstract get data(): Required<ObjectsNetData[ObjectType]>;
+    abstract get data(): Required<EntitiesNetData[EntityType]>;
 }

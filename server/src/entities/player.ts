@@ -1,10 +1,10 @@
 import { type WebSocket } from "uWebSockets.js";
-import { GameObject } from "./gameObject";
+import { ServerEntity } from "./entity";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { type GameBitStream, ObjectType, PacketType, type Packet } from "../../../common/src/net";
+import { type GameBitStream, EntityType, PacketType, type Packet } from "../../../common/src/net";
 import { type Game } from "../game";
-import { UpdatePacket, type ObjectsNetData } from "../../../common/src/packets/updatePacket";
+import { UpdatePacket, type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
 import { Random } from "../../../common/src/utils/random";
 import { MathUtils } from "../../../common/src/utils/math";
@@ -12,8 +12,8 @@ import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { GameConstants } from "../../../common/src/constants";
 
-export class Player extends GameObject<ObjectType.Player> {
-    readonly type = ObjectType.Player;
+export class Player extends ServerEntity<EntityType.Player> {
+    readonly type = EntityType.Player;
     socket: WebSocket<PlayerData>;
     name = "";
     direction = Vec2.new(0, 0);
@@ -26,9 +26,9 @@ export class Player extends GameObject<ObjectType.Player> {
     firstPacket = true;
 
     /**
-    * Objects the player can see
+    * Entities the player can see
     */
-    visibleObjects = new Set<GameObject>();
+    visibleEntities = new Set<ServerEntity>();
 
     // what needs to be sent again to the client
     readonly dirty = {
@@ -83,42 +83,42 @@ export class Player extends GameObject<ObjectType.Player> {
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
         this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
 
-        this.game.grid.updateObject(this);
+        this.game.grid.updateEntity(this);
     }
 
     sendPackets() {
-        // calculate visible, deleted, and dirty objects
+        // calculate visible, deleted, and dirty entities
         // and send them to the client
         const updatePacket = new UpdatePacket();
 
         const radius = this.zoom + 10;
         const rect = RectHitbox.fromCircle(radius, this.position);
-        const newVisibleObjects = this.game.grid.intersectHitbox(rect);
+        const newVisibleEntities = this.game.grid.intersectHitbox(rect);
 
-        for (const obj of this.visibleObjects) {
-            if (!newVisibleObjects.has(obj)) {
-                updatePacket.deletedObjects.push(obj.id);
+        for (const entity of this.visibleEntities) {
+            if (!newVisibleEntities.has(entity)) {
+                updatePacket.deletedEntities.push(entity.id);
             }
         }
 
-        for (const obj of newVisibleObjects) {
-            if (!this.visibleObjects.has(obj)) {
-                updatePacket.serverFullObjs.push(obj);
+        for (const entity of newVisibleEntities) {
+            if (!this.visibleEntities.has(entity)) {
+                updatePacket.serverFullEntities.push(entity);
             }
         }
 
-        for (const obj of this.game.fullDirtyObjects) {
-            if (this.visibleObjects.has(obj) && !updatePacket.serverFullObjs.includes(obj)) {
-                updatePacket.serverFullObjs.push(obj);
+        for (const entity of this.game.fullDirtyEntities) {
+            if (this.visibleEntities.has(entity) && !updatePacket.serverFullEntities.includes(entity)) {
+                updatePacket.serverFullEntities.push(entity);
             }
         }
 
-        for (const obj of this.game.dirtyObjects) {
-            if (this.visibleObjects.has(obj) && !updatePacket.serverFullObjs.includes(obj)) {
-                updatePacket.serverPartialObjs.push(obj);
+        for (const entity of this.game.partialDirtyEntities) {
+            if (this.visibleEntities.has(entity) && !updatePacket.serverFullEntities.includes(entity)) {
+                updatePacket.serverPartialEntities.push(entity);
             }
         }
-        this.visibleObjects = newVisibleObjects;
+        this.visibleEntities = newVisibleEntities;
 
         updatePacket.playerData = this;
         updatePacket.playerDataDirty = this.dirty;
@@ -144,7 +144,7 @@ export class Player extends GameObject<ObjectType.Player> {
                 if (!this.name) this.name = GameConstants.defaultName;
                 this.socket.getUserData().joined = true;
                 this.game.players.add(this);
-                this.game.grid.addObject(this);
+                this.game.grid.addEntity(this);
 
                 console.log(`"${this.name}" joined the game`);
                 break;
@@ -160,7 +160,7 @@ export class Player extends GameObject<ObjectType.Player> {
         }
     }
 
-    get data(): Required<ObjectsNetData[ObjectType.Player]> {
+    get data(): Required<EntitiesNetData[EntityType.Player]> {
         return {
             position: this.position,
             direction: this.direction,

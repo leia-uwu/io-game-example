@@ -1,13 +1,13 @@
 import { Container, Sprite, Text } from "pixi.js";
 import { type Game } from "../game";
-import { GameObject } from "./gameObject";
-import { ObjectType } from "../../../../common/src/net";
-import { type ObjectsNetData } from "../../../../common/src/packets/updatePacket";
+import { ClientEntity } from "./entity";
+import { EntityType } from "../../../../common/src/net";
+import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
 
-export class Player extends GameObject<ObjectType.Player> {
-    readonly type = ObjectType.Player;
+export class Player extends ClientEntity<EntityType.Player> {
+    readonly type = EntityType.Player;
 
     container = new Container();
     image = Sprite.from("./game/player-blue.svg");
@@ -32,7 +32,7 @@ export class Player extends GameObject<ObjectType.Player> {
         this.nameText.text = this.game.playerNames.get(this.id) ?? "Unknown Player";
     }
 
-    updateFromData(data: ObjectsNetData[ObjectType.Player]): void {
+    updateFromData(data: EntitiesNetData[EntityType.Player]): void {
         this.position = data.position;
         this.direction = data.direction;
 

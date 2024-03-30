@@ -1,9 +1,9 @@
-import { type ObjectType } from "../../../../common/src/net";
-import { type ObjectsNetData } from "../../../../common/src/packets/updatePacket";
+import { type EntityType } from "../../../../common/src/net";
+import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
 
-export abstract class GameObject<T extends ObjectType = ObjectType> {
+export abstract class ClientEntity<T extends EntityType = EntityType> {
     abstract type: T;
     game: Game;
     id: number;
@@ -14,7 +14,7 @@ export abstract class GameObject<T extends ObjectType = ObjectType> {
         this.id = id;
     }
 
-    abstract updateFromData(data: ObjectsNetData[T]): void;
+    abstract updateFromData(data: EntitiesNetData[T]): void;
 
     abstract destroy(): void;
 }

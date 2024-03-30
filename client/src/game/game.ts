@@ -1,10 +1,10 @@
-import { GameBitStream, ObjectType, type Packet, PacketType } from "../../../common/src/net";
+import { GameBitStream, EntityType, type Packet, PacketType } from "../../../common/src/net";
 import { Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
-import { ObjectPool } from "../../../common/src/utils/objectPool";
-import { type GameObject } from "./objects/gameObject";
-import { Player } from "./objects/player";
+import { EntityPool } from "../../../common/src/utils/entityPool";
+import { type ClientEntity } from "./entities/entity";
+import { Player } from "./entities/player";
 import { Camera } from "./camera";
 import { InputManager } from "./inputManager";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
@@ -15,12 +15,12 @@ export class Game {
 
     running = false;
 
-    objects = new ObjectPool<GameObject>();
+    entities = new EntityPool<ClientEntity>();
 
     activePlayerID = -1;
 
     get activePlayer(): Player | undefined {
-        return this.objects.get(this.activePlayerID) as Player;
+        return this.entities.get(this.activePlayerID) as Player;
     }
 
     playerNames = new Map<number, string>();
@@ -114,9 +114,9 @@ export class Game {
             this.camera.zoom = packet.playerData.zoom;
         }
 
-        for (const id of packet.deletedObjects) {
-            this.objects.get(id)?.destroy();
-            this.objects.deleteByID(id);
+        for (const id of packet.deletedEntities) {
+            this.entities.get(id)?.destroy();
+            this.entities.deleteByID(id);
         }
 
         for (const newPlayer of packet.newPlayers) {
@@ -126,29 +126,29 @@ export class Game {
             this.playerNames.delete(id);
         }
 
-        for (const fullObject of packet.fullObjects) {
-            let object = this.objects.get(fullObject.id);
+        for (const entityData of packet.fullEntities) {
+            let entity = this.entities.get(entityData.id);
 
-            if (!object) {
-                switch (fullObject.type) {
-                    case ObjectType.Player: {
-                        object = new Player(this, fullObject.id);
+            if (!entity) {
+                switch (entityData.type) {
+                    case EntityType.Player: {
+                        entity = new Player(this, entityData.id);
                         break;
                     }
                 }
-                this.objects.add(object);
+                this.entities.add(entity);
             }
-            object.updateFromData(fullObject.data);
+            entity.updateFromData(entityData.data);
         }
 
-        for (const partialObject of packet.partialObjects) {
-            const object = this.objects.get(partialObject.id);
+        for (const entityPartialData of packet.partialEntities) {
+            const entity = this.entities.get(entityPartialData.id);
 
-            if (!object) {
-                console.warn(`Unknown partial dirty object with ID ${partialObject.id}`);
+            if (!entity) {
+                console.warn(`Unknown partial dirty entity with ID ${entityPartialData.id}`);
                 continue;
             }
-            object.updateFromData(partialObject.data);
+            entity.updateFromData(entityPartialData.data);
         }
 
         if (packet.mapDirty) {
