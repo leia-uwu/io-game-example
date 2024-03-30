@@ -8,10 +8,7 @@ export class InputPacket extends Packet {
     direction = Vec2.new(0, 0);
     mouseDown = false;
 
-    override serialize(): void {
-        super.serialize();
-        const stream = this.stream;
-
+    override serialize(stream: GameBitStream): void {
         stream.writeBoolean(this.mouseDown);
         stream.writeUnit(this.direction, 16);
     }

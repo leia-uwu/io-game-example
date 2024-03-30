@@ -4,6 +4,7 @@ import { GameConstants } from "./constants";
 import { MathUtils } from "./utils/math";
 
 export enum PacketType {
+    None,
     Join,
     Update,
     Input
@@ -231,18 +232,37 @@ export class GameBitStream extends BitStream {
 
 export abstract class Packet {
     abstract readonly type: PacketType;
-
     abstract readonly allocBytes: number;
 
-    stream!: GameBitStream;
+    abstract serialize(stream: GameBitStream): void;
+    abstract deserialize(stream: GameBitStream): void;
+}
 
-    serialize(): void {
-        this.stream = GameBitStream.alloc(this.allocBytes);
-        this.stream.writeUint8(this.type);
+export class PacketStream {
+    stream: GameBitStream;
+
+    constructor(source: GameBitStream | ArrayBuffer) {
+        if (source instanceof ArrayBuffer) {
+            this.stream = new GameBitStream(source);
+        } else {
+            this.stream = source;
+        }
+    }
+
+    serializePacket(packet: Packet) {
+        this.stream.writeUint8(packet.type);
+        packet.serialize(this.stream);
+        this.stream.writeAlignToNextByte();
+    }
+
+    readPacketType(): PacketType {
+        if (this.stream.length - this.stream.byteIndex * 8 >= 1) {
+            return this.stream.readUint8();
+        }
+        return PacketType.None;
     }
 
     getBuffer(): ArrayBuffer {
         return this.stream.buffer.slice(0, this.stream.index);
     }
-    abstract deserialize(stream: GameBitStream): void;
 }

@@ -7,9 +7,7 @@ export class JoinPacket extends Packet {
 
     name = "";
 
-    override serialize(): void {
-        super.serialize();
-        const stream = this.stream;
+    override serialize(stream: GameBitStream): void {
         stream.writeASCIIString(this.name, GameConstants.nameMaxLength);
     }
 

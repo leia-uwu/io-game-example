@@ -2,7 +2,7 @@ import { type WebSocket } from "uWebSockets.js";
 import { ServerEntity } from "./entity";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { type GameBitStream, EntityType, PacketType, type Packet } from "../../../common/src/net";
+import { GameBitStream, EntityType, PacketType, type Packet, PacketStream } from "../../../common/src/net";
 import { type Game } from "../game";
 import { UpdatePacket, type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
@@ -62,11 +62,6 @@ export class Player extends ServerEntity<EntityType.Player> {
         super(game, pos);
         this.position = pos;
         this.socket = socket;
-    }
-
-    sendPacket(packet: Packet): void {
-        packet.serialize();
-        this.socket.send(packet.getBuffer(), true, false);
     }
 
     tick(): void {
@@ -130,12 +125,39 @@ export class Player extends ServerEntity<EntityType.Player> {
         updatePacket.map.height = this.game.height;
         updatePacket.mapDirty = this.firstPacket ?? this.game.mapDirty;
 
-        this.sendPacket(updatePacket);
         this.firstPacket = false;
+
+        this.packetStream.stream.index = 0;
+
+        this.packetStream.serializePacket(updatePacket);
+
+        for (const packet of this._packetsToSend) {
+            this.packetStream.serializePacket(packet);
+        }
+        const buffer = this.packetStream.getBuffer();
+        this.sendData(buffer);
     }
 
-    processPacket(stream: GameBitStream): void {
-        const packetType = stream.readUint8();
+    packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
+    private readonly _packetsToSend: Packet[] = [];
+
+    sendPacket(packet: Packet): void {
+        this._packetsToSend.push(packet);
+    }
+
+    sendData(data: ArrayBuffer): void {
+        try {
+            this.socket.send(data, true, false);
+        } catch (error) {
+            console.error("Error sending data:", error);
+        }
+    }
+
+    processMessage(message: ArrayBuffer): void {
+        const packetStream = new PacketStream(message);
+        const stream = packetStream.stream;
+        const packetType = packetStream.readPacketType();
+
         switch (packetType) {
             case PacketType.Join: {
                 const packet = new JoinPacket();

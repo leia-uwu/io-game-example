@@ -108,12 +108,10 @@ export class UpdatePacket extends Packet {
         fullStream: GameBitStream
     }> = [];
 
-    override serialize(): void {
-        super.serialize();
-        const stream = this.stream;
-
+    override serialize(stream: GameBitStream): void {
         let flags = 0;
-        const flagIdx = this.stream.index;
+        // save the stream index for writing flags
+        const flagsIdx = stream.index;
         stream.writeUint8(flags);
 
         if (this.deletedEntities.length) {
@@ -180,8 +178,9 @@ export class UpdatePacket extends Packet {
             flags |= UpdateFlags.Map;
         }
 
+        // write flags and restore stream index
         const idx = stream.index;
-        stream.index = flagIdx;
+        stream.index = flagsIdx;
         stream.writeUint8(flags);
         stream.index = idx;
     }

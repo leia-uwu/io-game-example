@@ -1,4 +1,4 @@
-import { GameBitStream, EntityType, type Packet, PacketType } from "../../../common/src/net";
+import { GameBitStream, EntityType, type Packet, PacketType, PacketStream } from "../../../common/src/net";
 import { Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
@@ -66,34 +66,55 @@ export class Game {
         this.socket.binaryType = "arraybuffer";
 
         this.socket.onmessage = (msg) => {
-            const data = msg.data as ArrayBuffer;
-            const stream = new GameBitStream(data);
-
-            switch (stream.readUint8()) {
-                case PacketType.Update: {
-                    const packet = new UpdatePacket();
-                    packet.deserialize(stream);
-                    this.updateFromPacket(packet);
-                    this.running = true;
-                    break;
-                }
-            }
+            this.onMessage(msg.data);
         };
 
         this.socket.onopen = () => {
-            getElem("#game").style.display = "";
-            getElem("#home").style.display = "none";
             const joinPacket = new JoinPacket();
             joinPacket.name = (getElem<HTMLInputElement>("#name-input")).value;
             this.sendPacket(joinPacket);
         };
 
         this.socket.onclose = () => {
-            this.end();
+            this.endGame();
+        };
+
+        this.socket.onerror = (error) => {
+            console.error(error);
+            this.endGame();
         };
     }
 
-    end(): void {
+    onMessage(data: ArrayBuffer): void {
+        const packetStream = new PacketStream(data);
+        while (true) {
+            const packetType = packetStream.readPacketType();
+            console.log(packetType);
+            if (packetType === PacketType.None) break;
+
+            const stream = packetStream.stream;
+            switch (packetType) {
+                case PacketType.Update: {
+                    const packet = new UpdatePacket();
+                    packet.deserialize(stream);
+                    this.updateFromPacket(packet);
+                    this.startGame();
+                    break;
+                }
+            }
+
+            stream.readAlignToNextByte();
+        }
+    }
+
+    startGame(): void {
+        if (this.running) return;
+        this.running = true;
+        getElem("#game").style.display = "";
+        getElem("#home").style.display = "none";
+    }
+
+    endGame(): void {
         getElem("#game").style.display = "none";
         getElem("#home").style.display = "";
         this.running = false;
@@ -179,8 +200,9 @@ export class Game {
 
     sendPacket(packet: Packet) {
         if (this.socket && this.socket.readyState === this.socket.OPEN) {
-            packet.serialize();
-            this.socket.send(packet.getBuffer());
+            const packetStream = new PacketStream(GameBitStream.alloc(128));
+            packetStream.serializePacket(packet);
+            this.socket.send(packetStream.getBuffer());
         }
     }
 

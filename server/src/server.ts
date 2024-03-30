@@ -1,5 +1,4 @@
 import { App, type HttpResponse, SSLApp } from "uWebSockets.js";
-import { GameBitStream } from "../../common/src/net";
 import { type Player } from "./entities/player";
 import { Game } from "./game";
 import { Config } from "./config";
@@ -64,11 +63,10 @@ app.ws<PlayerData>("/play", {
      * Handle packets
      */
     message(socket, message) {
-        const stream = new GameBitStream(message);
         try {
             const player = socket.getUserData().entity;
             if (player === undefined) return;
-            player.processPacket(stream);
+            player.processMessage(message);
         } catch (e) {
             console.warn("Error parsing message:", e);
         }
