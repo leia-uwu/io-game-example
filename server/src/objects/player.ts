@@ -21,6 +21,8 @@ export class Player extends GameObject<ObjectType.Player> {
 
     hitbox = new CircleHitbox(1.5);
 
+    health = 100;
+
     firstPacket = true;
 
     /**
@@ -71,8 +73,6 @@ export class Player extends GameObject<ObjectType.Player> {
         if (this.mouseDown) {
             this.position = Vec2.sub(this.position, this.direction);
         }
-        this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
-        this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
         this.setDirty();
 
         for (const player of this.game.players) {
@@ -80,6 +80,8 @@ export class Player extends GameObject<ObjectType.Player> {
                 this.hitbox.resolveCollision(player.hitbox);
             }
         }
+        this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
+        this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
 
         this.game.grid.updateObject(this);
     }
@@ -93,34 +95,36 @@ export class Player extends GameObject<ObjectType.Player> {
         const rect = RectHitbox.fromCircle(radius, this.position);
         const newVisibleObjects = this.game.grid.intersectHitbox(rect);
 
-        for (const object of this.visibleObjects) {
-            if (!newVisibleObjects.has(object)) {
-                this.visibleObjects.delete(object);
-                updatePacket.deletedObjects.push(object.id);
+        for (const obj of this.visibleObjects) {
+            if (!newVisibleObjects.has(obj)) {
+                updatePacket.deletedObjects.push(obj.id);
             }
         }
 
-        for (const object of newVisibleObjects) {
-            if (!this.visibleObjects.has(object)) {
-                this.visibleObjects.add(object);
-                updatePacket.fullObjects.push(object);
+        for (const obj of newVisibleObjects) {
+            if (!this.visibleObjects.has(obj)) {
+                updatePacket.serverFullObjs.push(obj);
             }
         }
 
-        for (const object of this.game.fullDirtyObjects) {
-            if (this.visibleObjects.has(object)) {
-                updatePacket.fullObjects.push(object);
+        for (const obj of this.game.fullDirtyObjects) {
+            if (this.visibleObjects.has(obj) && !updatePacket.serverFullObjs.includes(obj)) {
+                updatePacket.serverFullObjs.push(obj);
             }
         }
 
-        for (const object of this.game.dirtyObjects) {
-            if (this.visibleObjects.has(object) && !updatePacket.fullObjects.includes(object)) {
-                updatePacket.partialObjects.push(object);
+        for (const obj of this.game.dirtyObjects) {
+            if (this.visibleObjects.has(obj) && !updatePacket.serverFullObjs.includes(obj)) {
+                updatePacket.serverPartialObjs.push(obj);
             }
         }
+        this.visibleObjects = newVisibleObjects;
 
         updatePacket.playerData = this;
         updatePacket.playerDataDirty = this.dirty;
+
+        updatePacket.newPlayers = this.firstPacket ? [...this.game.players] : this.game.newPlayers;
+        updatePacket.deletedPlayers = this.game.deletedPlayers;
 
         updatePacket.map.width = this.game.width;
         updatePacket.map.height = this.game.height;
@@ -158,13 +162,10 @@ export class Player extends GameObject<ObjectType.Player> {
 
     get data(): Required<ObjectsNetData[ObjectType.Player]> {
         return {
-            partial: {
-                position: this.position,
-                direction: this.direction
-
-            },
+            position: this.position,
+            direction: this.direction,
             full: {
-                name: this.name
+                health: this.health
             }
         };
     }

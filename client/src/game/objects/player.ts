@@ -28,11 +28,13 @@ export class Player extends GameObject<ObjectType.Player> {
         this.nameText.anchor.set(0.5);
         this.game.camera.addObject(this.container);
         this.game.camera.addObject(this.nameText);
+
+        this.nameText.text = this.game.playerNames.get(this.id) ?? "Unknown Player";
     }
 
     updateFromData(data: ObjectsNetData[ObjectType.Player]): void {
-        this.position = data.partial.position;
-        this.direction = data.partial.direction;
+        this.position = data.position;
+        this.direction = data.direction;
 
         this.container.position.copyFrom(Camera.vecToScreen(this.position));
         this.nameText.position.copyFrom(Vec2.add(this.container.position, Vec2.new(0, 60)));
@@ -41,9 +43,6 @@ export class Player extends GameObject<ObjectType.Player> {
 
         if (this.id === this.game.activePlayerID) {
             this.game.camera.position = this.container.position;
-        }
-        if (data.full) {
-            this.nameText.text = data.full.name;
         }
     }
 

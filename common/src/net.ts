@@ -19,37 +19,37 @@ export class GameBitStream extends BitStream {
     }
 
     /**
-     * Write a floating point number to the stream.
-     * @param value The number.
-     * @param min The minimum number.
-     * @param max The maximum number.
+     * Write a floating point number to the stream
+     * @param value The number
+     * @param min The minimum number
+     * @param max The maximum number
      * @param bitCount The number of bits to write
      */
     writeFloat(value: number, min: number, max: number, bitCount: number): void {
-        if (bitCount <= 0 || bitCount > 31) {
-            throw new Error(`BitCount ${bitCount} is out of range {1, 31}`);
+        if (bitCount < 0 || bitCount >= 31) {
+            throw new Error(`Invalid bit count ${bitCount}`);
         }
-        if (value < min || value > max) {
-            throw new Error(`Value ${value} out of range [${min}, ${max}]`);
+        if (value > max || value < min) {
+            throw new Error(`Value out of range: ${value}, range: ${min}, ${max}`);
         }
         const range = (1 << bitCount) - 1;
-        const v = (MathUtils.clamp(value, min, max) - min) / (max - min) * range + 0.5;
-        this.writeBits(v, bitCount);
+        const clamped = MathUtils.clamp(value, min, max);
+        this.writeBits(((clamped - min) / (max - min)) * range + 0.5, bitCount);
     }
 
     /**
-     * Read a floating point number from the stream.
-     * @param min The minimum number.
-     * @param max The maximum number.
+     * Read a floating point number from the stream
+     * @param min The minimum number
+     * @param max The maximum number
      * @param bitCount The number of bits to read
-     * @return The floating point number.
+     * @return The floating point number
      */
     readFloat(min: number, max: number, bitCount: number): number {
-        if (bitCount <= 0 || bitCount > 31) {
-            throw new Error(`BitCount ${bitCount} out of range {1, 31}`);
+        if (bitCount < 0 || bitCount >= 31) {
+            throw new Error(`Invalid bit count ${bitCount}`);
         }
         const range = (1 << bitCount) - 1;
-        return min + this.readBits(bitCount) / range * (max - min);
+        return min + (max - min) * this.readBits(bitCount) / range;
     }
 
     /**
@@ -151,6 +151,81 @@ export class GameBitStream extends BitStream {
             GameBitStream.unitEps,
             bitCount
         );
+    }
+
+    /**
+     * Write an array to the stream
+     * @param arr An array containing the items to serialize
+     * @param serializeFn The function to serialize each iterator item
+     * @param size The iterator size (eg. array.length or set.size)
+     */
+    writeArray<T>(arr: T[], bits: number, serializeFn: (item: T) => void): void {
+        if (bits < 0 || bits >= 31) {
+            throw new Error(`Invalid bit count ${bits}`);
+        }
+
+        this.writeBits(arr.length, bits);
+
+        const max = 1 << bits;
+        for (let i = 0; i < arr.length; i++) {
+            if (i > max) {
+                console.warn(`writeArray: iterator overflow: ${bits} bits, ${arr.length} size`);
+                break;
+            }
+            serializeFn(arr[i]);
+        }
+    }
+
+    /**
+     * Read an array from the stream
+     * @param arr The array to add the deserialized elements;
+     * @param serializeFn The function to de-serialize each iterator item
+     * @param bits The maximum length of bits to read
+     */
+    readArray<T>(arr: T[], bits: number, deserializeFn: () => T): void {
+        const size = this.readBits(bits);
+
+        for (let i = 0; i < size; i++) {
+            arr.push(deserializeFn());
+        }
+    }
+
+    // private field L
+    declare _view: {
+        _view: Uint8Array
+    };
+
+    /**
+     * Copy bytes from a source stream to this stream
+     * !!!NOTE: Both streams index must be byte aligned
+     * @param {BitStream} src
+     * @param {number} offset
+     * @param {number} length
+     */
+    writeBytes(src: GameBitStream, offset: number, length: number): void {
+        if (this.index % 8 !== 0) {
+            throw new Error("WriteBytes: stream must be byte aligned");
+        }
+        const data = new Uint8Array(src._view._view.buffer, offset, length);
+        this._view._view.set(data, this.index / 8);
+        this.index += length * 8;
+    }
+
+    /**
+     * Writes a byte alignment to the stream
+     * This is to ensure the stream index is a multiple of 8
+     */
+    writeAlignToNextByte(): void {
+        const offset = 8 - this.index % 8;
+        if (offset < 8) this.writeBits(0, offset);
+    }
+
+    /**
+     * Read a byte alignment from the stream
+     */
+    readAlignToNextByte(): void {
+        const offset = 8 - this.index % 8;
+        if (offset < 8) this.readBits(offset);
     }
 }
 

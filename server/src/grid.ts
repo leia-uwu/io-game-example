@@ -37,6 +37,7 @@ export class Grid {
 
     addObject(obj: GameObject): void {
         this.objects.set(obj.id, obj);
+        obj.init();
         this.updateObject(obj);
     }
 

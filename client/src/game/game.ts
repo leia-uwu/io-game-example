@@ -23,6 +23,8 @@ export class Game {
         return this.objects.get(this.activePlayerID) as Player;
     }
 
+    playerNames = new Map<number, string>();
+
     camera = new Camera(this);
     inputManager = new InputManager(this);
 
@@ -115,6 +117,13 @@ export class Game {
         for (const id of packet.deletedObjects) {
             this.objects.get(id)?.destroy();
             this.objects.deleteByID(id);
+        }
+
+        for (const newPlayer of packet.newPlayers) {
+            this.playerNames.set(newPlayer.id, newPlayer.name);
+        }
+        for (const id of packet.deletedPlayers) {
+            this.playerNames.delete(id);
         }
 
         for (const fullObject of packet.fullObjects) {

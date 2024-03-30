@@ -9,6 +9,8 @@ import NanoTimer from "nanotimer";
 
 export class Game {
     players = new Set<Player>();
+    newPlayers: Player[] = [];
+    deletedPlayers: number[] = [];
 
     dirtyObjects = new ObjectPool<GameObject>();
     fullDirtyObjects = new ObjectPool<GameObject>();
@@ -29,23 +31,38 @@ export class Game {
     timer = new NanoTimer();
 
     constructor() {
-        this.timer.setInterval(this.tick.bind(this), "", "30m")
+        this.timer.setInterval(this.tick.bind(this), "", "30m");
     }
 
     addPlayer(socket: WebSocket<PlayerData>): Player {
         const player = new Player(this, socket);
+        this.newPlayers.push(player);
         return player;
     }
 
     removePlayer(player: Player): void {
         this.players.delete(player);
         this.grid.remove(player);
+        this.deletedPlayers.push(player.id);
         console.log(`"${player.name}" left game`);
     }
 
     tick(): void {
         for (const player of this.players) {
             player.tick();
+        }
+
+        // Cache object serializations
+        for (const obj of this.dirtyObjects) {
+            if (this.fullDirtyObjects.has(obj)) {
+                this.dirtyObjects.delete(obj);
+                continue;
+            }
+            obj.serializePartial();
+        }
+
+        for (const obj of this.fullDirtyObjects) {
+            obj.serializeFull();
         }
 
         // Second loop over players: calculate visible objects & send updates
@@ -62,6 +79,8 @@ export class Game {
 
         this.dirtyObjects.clear();
         this.fullDirtyObjects.clear();
+        this.newPlayers.length = 0;
+        this.deletedPlayers.length = 0;
         this.mapDirty = false;
     }
 }
