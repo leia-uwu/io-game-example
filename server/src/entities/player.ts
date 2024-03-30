@@ -101,8 +101,9 @@ export class Player extends ServerEntity<EntityType.Player> {
             }
         }
 
-        this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
-        this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
+        const rad = this.hitbox.radius;
+        this.position.x = MathUtils.clamp(this.position.x, rad, this.game.width - rad);
+        this.position.y = MathUtils.clamp(this.position.y, rad, this.game.height - rad);
 
         if (!Vec2.equals(this.position, oldPos)) {
             this.setDirty();
