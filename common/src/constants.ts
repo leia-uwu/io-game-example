@@ -7,6 +7,7 @@ export const GameConstants = {
         enemyTint: 0xff3838,
         speed: 25,
         maxHealth: 100,
-        defaultHealth: 100
+        defaultHealth: 100,
+        fireDelay: 250
     }
 };

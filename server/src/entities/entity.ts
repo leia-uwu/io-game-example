@@ -24,6 +24,8 @@ export abstract class ServerEntity<T extends EntityType = EntityType> {
         this._position = pos;
     }
 
+    abstract tick(): void
+
     init(): void {
         // + 3 for entity id (2 bytes) and entity type (1 byte)
         this.partialStream = GameBitStream.alloc(EntitySerializations[this.type].partialSize + 3);
@@ -35,7 +37,7 @@ export abstract class ServerEntity<T extends EntityType = EntityType> {
         this.partialStream.index = 0;
         this.partialStream.writeUint16(this.id);
         this.partialStream.writeUint8(this.type);
-        EntitySerializations[this.type].serializePartial(this.partialStream, this.data);
+        EntitySerializations[this.type].serializePartial(this.partialStream, this.data as EntitiesNetData[typeof this.type]);
         this.partialStream.writeAlignToNextByte();
     }
 

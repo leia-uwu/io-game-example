@@ -12,6 +12,12 @@ export interface EntitiesNetData {
         full?: {
             health: number
         }
+    },
+    [EntityType.Projectile]: {
+        position: Vector
+        full?: {
+            direction: Vector
+        }
     }
 }
 
@@ -34,7 +40,7 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
             stream.writeUnit(data.direction, 16);
         },
         serializeFull(stream, data): void {
-            stream.writeFloat(data.health, 0, GameConstants.player.maxHealth, 8);
+            stream.writeFloat(data.health, 0, GameConstants.player.maxHealth, 12);
         },
         deserializePartial(stream) {
             return {
@@ -44,10 +50,29 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         },
         deserializeFull(stream) {
             return {
-                health: stream.readFloat(0, GameConstants.player.maxHealth, 8)
+                health: stream.readFloat(0, GameConstants.player.maxHealth, 12)
             };
         }
-
+    },
+    [EntityType.Projectile]: {
+        partialSize: 6,
+        fullSize: 4,
+        serializePartial(stream, data) {
+            stream.writePosition(data.position)
+        },
+        serializeFull(stream, data) {
+            stream.writeUnit(data.direction, 16)
+        },
+        deserializePartial(stream) {
+            return {
+                position: stream.readPosition()
+            }
+        },
+        deserializeFull(stream) {
+            return {
+                direction: stream.readUnit(16)
+            }
+        },
     }
 };
 
@@ -189,10 +214,9 @@ export class UpdatePacket extends Packet {
         const flags = stream.readUint8();
 
         if (flags & UpdateFlags.DeletedEntities) {
-            const count = stream.readUint16();
-            for (let i = 0; i < count; i++) {
-                this.deletedEntities.push(stream.readUint16());
-            }
+            stream.readArray(this.deletedEntities, 16, () => {
+                return stream.readUint16();
+            });
         }
 
         if (flags & UpdateFlags.FullEntities) {

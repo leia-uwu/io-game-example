@@ -37,11 +37,11 @@ export class InputManager {
         window.addEventListener("wheel", this.handleInputEvent.bind(this, true));
 
         window.addEventListener("mousemove", (e) => {
-            const rotation = Math.atan2(window.innerHeight / 2 - e.clientY, window.innerWidth / 2 - e.clientX);
+            const rotation = Math.atan2(window.innerHeight / 2 - e.clientY, window.innerWidth / 2 - e.clientX) - Math.PI / 2;
 
             this.mouseDir = Vec2.new(
-                Math.cos(rotation),
-                Math.sin(rotation)
+                Math.sin(rotation),
+                -Math.cos(rotation)
             );
         });
     }

@@ -9,6 +9,7 @@ import { Camera } from "./camera";
 import { InputManager } from "./inputManager";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
+import { Projectile } from "./entities/projectile";
 
 export class Game {
     socket?: WebSocket;
@@ -56,7 +57,11 @@ export class Game {
                 e.stopPropagation();
             });
 
+            // TODO: assets loader
             await Assets.load("./game/player.svg");
+            await Assets.load("./game/projectile.svg");
+
+            getElem<HTMLButtonElement>("#play-btn").disabled = false;
         })();
     }
 
@@ -89,7 +94,6 @@ export class Game {
         const packetStream = new PacketStream(data);
         while (true) {
             const packetType = packetStream.readPacketType();
-            console.log(packetType);
             if (packetType === PacketType.None) break;
 
             const stream = packetStream.stream;
@@ -156,6 +160,9 @@ export class Game {
                         entity = new Player(this, entityData.id);
                         break;
                     }
+                    case EntityType.Projectile: {
+                        entity = new Projectile(this, entityData.id)
+                    }
                 }
                 this.entities.add(entity);
             }
@@ -216,6 +223,7 @@ export class Game {
 
         const inputPacket = new InputPacket();
         inputPacket.mouseDown = this.inputManager.isInputDown("Mouse0");
+        inputPacket.shoot = this.inputManager.isInputDown("Mouse2");
         inputPacket.direction = this.inputManager.mouseDir;
         this.sendPacket(inputPacket);
     }

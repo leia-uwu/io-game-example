@@ -183,5 +183,15 @@ export const Vec2 = {
      */
     dot(a: Vector, b: Vector): number {
         return a.x * b.x + a.y * b.y;
-    }
+    },
+    /**
+     * Tests whether two `Vectors` are equal, within a certain tolerance
+     * @param a The first `Vector`
+     * @param b The second `Vector`
+     * @param epsilon The largest difference in any component that will be accepted as being "equal"
+     * @returns Whether or not the two vectors are considered equal with the given epsilon
+     */
+    equals(a: Vector, b: Vector, epsilon = 0.001): boolean {
+        return Math.abs(a.x - b.x) <= epsilon && Math.abs(a.y - b.y) <= epsilon;
+    },
 };

@@ -32,6 +32,7 @@ export class Player extends ClientEntity<EntityType.Player> {
         super(game, id);
 
         this.container.addChild(this.image);
+        this.container.zIndex = 2;
         this.image.anchor.set(0.5);
         this.nameText.anchor.set(0.5);
 
@@ -62,9 +63,9 @@ export class Player extends ClientEntity<EntityType.Player> {
         }
         if (data.full) {
             if (this.health !== data.full.health) {
+                this.health = data.full.health;
                 this.redrawHealthBar();
             }
-            this.health = data.full.health;
         }
     }
 
@@ -83,7 +84,11 @@ export class Player extends ClientEntity<EntityType.Player> {
     }
 
     destroy(): void {
-        this.container.destroy();
-        this.nameText.destroy();
+        this.container.destroy({
+            children: true
+        });
+        this.staticContainer.destroy({
+            children: true
+        });
     }
 }

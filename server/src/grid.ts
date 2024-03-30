@@ -19,7 +19,7 @@ export class Grid {
     // so removing the entity from the grid is faster
     private readonly _entitiesCells = new Map<number, Vector[]>();
 
-    private readonly entities = new Map<number, ServerEntity>();
+    readonly entities = new Map<number, ServerEntity>();
 
     constructor(width: number, height: number) {
         this.width = Math.floor(width / this.cellSize);
@@ -46,14 +46,14 @@ export class Grid {
      */
     updateEntity(entity: ServerEntity): void {
         this.removeFromGrid(entity);
-
         const cells: Vector[] = [];
 
         const rect = entity.hitbox.toRectangle();
+
         // Get the bounds of the hitbox
         // Round it to the grid cells
-        const min = this._roundToCells(Vec2.add(rect.min, entity.position));
-        const max = this._roundToCells(Vec2.add(rect.max, entity.position));
+        const min = this._roundToCells(rect.min);
+        const max = this._roundToCells(rect.max);
 
         // Add it to all grid cells that it intersects
         for (let x = min.x; x <= max.x; x++) {
@@ -92,7 +92,7 @@ export class Grid {
      * @param Hitbox The Hitbox
      * @return A set with the entities near this Hitbox
      */
-    intersectHitbox(hitbox: Hitbox): Set<ServerEntity> {
+    intersectsHitbox(hitbox: Hitbox): Set<ServerEntity> {
         const rect = hitbox.toRectangle();
 
         const min = this._roundToCells(rect.min);
@@ -103,8 +103,8 @@ export class Grid {
         for (let x = min.x; x <= max.x; x++) {
             const xRow = this._grid[x];
             for (let y = min.y; y <= max.y; y++) {
-                const entityMap = xRow[y];
-                for (const entity of entityMap.values()) {
+                const cellEntities = xRow[y].values();
+                for (const entity of cellEntities) {
                     entities.add(entity);
                 }
             }
@@ -120,7 +120,7 @@ export class Grid {
 
     // TODO: optimize this
     intersectLineSegment(a: Vector, b: Vector) {
-        return this.intersectHitbox(RectHitbox.fromLine(a, b));
+        return this.intersectsHitbox(RectHitbox.fromLine(a, b));
     }
 
     /**

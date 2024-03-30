@@ -11,7 +11,8 @@ export enum PacketType {
 }
 
 export enum EntityType {
-    Player
+    Player,
+    Projectile
 }
 
 export class GameBitStream extends BitStream {

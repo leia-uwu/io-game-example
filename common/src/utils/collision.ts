@@ -2,7 +2,7 @@ import { MathUtils } from "./math";
 import { Vec2, type Vector } from "./vector";
 
 export type CollisionResponse = { dir: Vector, pen: number } | null;
-export type lineIntersection = { point: Vector, normal: Vector } | null;
+export type LineIntersection = { point: Vector, normal: Vector } | null;
 
 export const Collision = {
     /**
@@ -81,7 +81,7 @@ export const Collision = {
      * @param rad The radius of the circle
      * @return An intersection response with the intersection position and normal Vectors, returns null if they don't intersect
     */
-    lineIntersectsCircle(s0: Vector, s1: Vector, pos: Vector, rad: number): lineIntersection {
+    lineIntersectsCircle(s0: Vector, s1: Vector, pos: Vector, rad: number): LineIntersection {
         let d = Vec2.sub(s1, s0);
         const len = Math.max(Vec2.length(d), 0.000001);
         d = Vec2.div(d, len);
@@ -118,7 +118,7 @@ export const Collision = {
      * @param max The max Vector of the rectangle
      * @return An intersection response with the intersection position and normal Vectors, returns null if they don't intersect
     */
-    lineIntersectsRect(s0: Vector, s1: Vector, min: Vector, max: Vector): lineIntersection {
+    lineIntersectsRect(s0: Vector, s1: Vector, min: Vector, max: Vector): LineIntersection {
         let tmin = 0;
         let tmax = Number.MAX_VALUE;
         const eps = 0.00001;

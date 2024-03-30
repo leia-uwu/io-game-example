@@ -11,6 +11,7 @@ import { MathUtils } from "../../../common/src/utils/math";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { GameConstants } from "../../../common/src/constants";
+import { Projectile } from "./projectile";
 
 export class Player extends ServerEntity<EntityType.Player> {
     readonly type = EntityType.Player;
@@ -18,6 +19,8 @@ export class Player extends ServerEntity<EntityType.Player> {
     name = "";
     direction = Vec2.new(0, 0);
     mouseDown = false;
+    shoot = false;
+    shotCooldown = 0;
 
     hitbox = new CircleHitbox(1.5);
 
@@ -30,8 +33,10 @@ export class Player extends ServerEntity<EntityType.Player> {
     set health(health: number) {
         if (health === this._health) return;
         this._health = MathUtils.clamp(health, 0, GameConstants.player.maxHealth);
-        this.setDirty();
+        this.setFullDirty();
     }
+
+    dead = false;
 
     firstPacket = true;
 
@@ -75,22 +80,41 @@ export class Player extends ServerEntity<EntityType.Player> {
     }
 
     tick(): void {
+        const oldPos = Vec2.clone(this.position);
         if (this.mouseDown) {
             const speed = Vec2.mul(this.direction, GameConstants.player.speed);
-            this.position = Vec2.sub(this.position, Vec2.mul(speed, this.game.dt));
+            this.position = Vec2.add(this.position, Vec2.mul(speed, this.game.dt));
         }
-        this.setDirty();
+
+        if (this.shoot && this.shotCooldown < this.game.now) {
+            this.shotCooldown = this.game.now + GameConstants.player.fireDelay;
+            const projectile = new Projectile(this.game, this.position, this.direction);
+            this.game.grid.addEntity(projectile);
+        }
 
         for (const player of this.game.players) {
             if (player !== this) {
-                this.hitbox.resolveCollision(player.hitbox);
+                const collision = this.hitbox.getIntersection(player.hitbox);
+                if (collision) {
+                    this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen))
+                }
             }
         }
 
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
         this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
 
-        this.game.grid.updateEntity(this);
+        if (!Vec2.equals(this.position, oldPos)) {
+            this.setDirty();
+            this.game.grid.updateEntity(this);
+        }
+    }
+
+    damage(amount: number) {
+        this.health -= amount;
+        if (this.health <= 0) {
+            this.dead = true;
+        }
     }
 
     sendPackets() {
@@ -100,7 +124,7 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         const radius = this.zoom + 10;
         const rect = RectHitbox.fromCircle(radius, this.position);
-        const newVisibleEntities = this.game.grid.intersectHitbox(rect);
+        const newVisibleEntities = this.game.grid.intersectsHitbox(rect);
 
         for (const entity of this.visibleEntities) {
             if (!newVisibleEntities.has(entity)) {
@@ -115,13 +139,17 @@ export class Player extends ServerEntity<EntityType.Player> {
         }
 
         for (const entity of this.game.fullDirtyEntities) {
-            if (this.visibleEntities.has(entity) && !updatePacket.serverFullEntities.includes(entity)) {
+            if (newVisibleEntities.has(entity) &&
+                !updatePacket.serverFullEntities.includes(entity)
+                && !updatePacket.deletedEntities.includes(entity.id)) {
                 updatePacket.serverFullEntities.push(entity);
             }
         }
 
         for (const entity of this.game.partialDirtyEntities) {
-            if (this.visibleEntities.has(entity) && !updatePacket.serverFullEntities.includes(entity)) {
+            if (newVisibleEntities.has(entity) &&
+                !updatePacket.serverFullEntities.includes(entity) &&
+                !updatePacket.deletedEntities.includes(entity.id)) {
                 updatePacket.serverPartialEntities.push(entity);
             }
         }
@@ -139,18 +167,19 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         this.firstPacket = false;
 
-        this.packetStream.stream.index = 0;
+        const packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
 
-        this.packetStream.serializePacket(updatePacket);
+        packetStream.stream.index = 0;
+
+        packetStream.serializePacket(updatePacket);
 
         for (const packet of this._packetsToSend) {
-            this.packetStream.serializePacket(packet);
+            packetStream.serializePacket(packet);
         }
-        const buffer = this.packetStream.getBuffer();
+        const buffer = packetStream.getBuffer();
         this.sendData(buffer);
     }
 
-    packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
     private readonly _packetsToSend: Packet[] = [];
 
     sendPacket(packet: Packet): void {
@@ -188,6 +217,7 @@ export class Player extends ServerEntity<EntityType.Player> {
                 packet.deserialize(stream);
                 this.direction = packet.direction;
                 this.mouseDown = packet.mouseDown;
+                this.shoot = packet.shoot;
                 this.setDirty();
                 break;
             }
