@@ -34,7 +34,7 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
             stream.writeUnit(data.direction, 16);
         },
         serializeFull(stream, data): void {
-            stream.writeFloat(data.health, 0, 100, 8);
+            stream.writeFloat(data.health, 0, GameConstants.player.maxHealth, 8);
         },
         deserializePartial(stream) {
             return {
@@ -44,7 +44,7 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         },
         deserializeFull(stream) {
             return {
-                health: stream.readFloat(0, 100, 8)
+                health: stream.readFloat(0, GameConstants.player.maxHealth, 8)
             };
         }
 
@@ -142,7 +142,7 @@ export class UpdatePacket extends Packet {
         if (this.newPlayers.length) {
             stream.writeArray(this.newPlayers, 8, (player) => {
                 stream.writeUint16(player.id);
-                stream.writeASCIIString(player.name, GameConstants.nameMaxLength);
+                stream.writeASCIIString(player.name, GameConstants.player.nameMaxLength);
             });
 
             flags |= UpdateFlags.NewPlayers;
@@ -229,7 +229,7 @@ export class UpdatePacket extends Packet {
             stream.readArray(this.newPlayers, 8, () => {
                 return {
                     id: stream.readUint16(),
-                    name: stream.readASCIIString(GameConstants.nameMaxLength)
+                    name: stream.readASCIIString(GameConstants.player.nameMaxLength)
                 };
             });
         }

@@ -21,7 +21,17 @@ export class Player extends ServerEntity<EntityType.Player> {
 
     hitbox = new CircleHitbox(1.5);
 
-    health = 100;
+    private _health = GameConstants.player.defaultHealth;
+
+    get health(): number {
+        return this._health;
+    }
+
+    set health(health: number) {
+        if (health === this._health) return;
+        this._health = MathUtils.clamp(health, 0, GameConstants.player.maxHealth);
+        this.setDirty();
+    }
 
     firstPacket = true;
 
@@ -66,7 +76,8 @@ export class Player extends ServerEntity<EntityType.Player> {
 
     tick(): void {
         if (this.mouseDown) {
-            this.position = Vec2.sub(this.position, this.direction);
+            const speed = Vec2.mul(this.direction, GameConstants.player.speed);
+            this.position = Vec2.sub(this.position, Vec2.mul(speed, this.game.dt));
         }
         this.setDirty();
 
@@ -75,6 +86,7 @@ export class Player extends ServerEntity<EntityType.Player> {
                 this.hitbox.resolveCollision(player.hitbox);
             }
         }
+
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
         this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
 
@@ -163,7 +175,7 @@ export class Player extends ServerEntity<EntityType.Player> {
                 const packet = new JoinPacket();
                 packet.deserialize(stream);
                 this.name = packet.name.trim();
-                if (!this.name) this.name = GameConstants.defaultName;
+                if (!this.name) this.name = GameConstants.player.defaultName;
                 this.socket.getUserData().joined = true;
                 this.game.players.add(this);
                 this.game.grid.addEntity(this);

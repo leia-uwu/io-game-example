@@ -45,6 +45,18 @@ export const MathUtils = {
     },
 
     /**
+     * Remap a number from a range to another
+     * @param v The value
+     * @param a The initial range minimum value
+     * @param b The initial range maximum value
+     * @param x The targeted range minimum value
+     * @param y The targeted range maximum value
+     */
+    remap(v: number, a: number, b: number, x: number, y: number) {
+        const t = MathUtils.clamp((v - a) / (b - a), 0.0, 1.0);
+        return MathUtils.lerp(x, y, t);
+    },
+    /**
      * Conform a number to specified bounds
      * @param a The number to conform
      * @param min The minimum value the number can hold

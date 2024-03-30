@@ -9,7 +9,7 @@ export class InputManager {
     /**
      * The angle between the mouse pointer and the screen center
      */
-    mouseAngle = Vec2.new(0, 0);
+    mouseDir = Vec2.new(0, 0);
 
     /**
      * The distance between the mouse pointer and the screen center
@@ -39,7 +39,7 @@ export class InputManager {
         window.addEventListener("mousemove", (e) => {
             const rotation = Math.atan2(window.innerHeight / 2 - e.clientY, window.innerWidth / 2 - e.clientX);
 
-            this.mouseAngle = Vec2.new(
+            this.mouseDir = Vec2.new(
                 Math.cos(rotation),
                 Math.sin(rotation)
             );

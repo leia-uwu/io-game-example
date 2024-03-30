@@ -56,7 +56,7 @@ export class Game {
                 e.stopPropagation();
             });
 
-            await Assets.load("./game/player-blue.svg");
+            await Assets.load("./game/player.svg");
         })();
     }
 
@@ -216,7 +216,7 @@ export class Game {
 
         const inputPacket = new InputPacket();
         inputPacket.mouseDown = this.inputManager.isInputDown("Mouse0");
-        inputPacket.direction = this.inputManager.mouseAngle;
+        inputPacket.direction = this.inputManager.mouseDir;
         this.sendPacket(inputPacket);
     }
 }

@@ -18,12 +18,15 @@ export class Game {
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
-    width = 512;
-    height = 512;
+    width = 128;
+    height = 128;
     mapDirty = false;
 
     // TODO: id allocator
     private _currentId = 1;
+
+    dt = 0;
+    now = Date.now();
 
     nextId(): number {
         return this._currentId++;
@@ -49,6 +52,8 @@ export class Game {
     }
 
     tick(): void {
+        this.dt = (Date.now() - this.now) / 1000;
+        this.now = Date.now();
         for (const player of this.players) {
             player.tick();
         }
