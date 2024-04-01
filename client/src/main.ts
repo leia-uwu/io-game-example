@@ -1,32 +1,35 @@
-import { Game } from "./game/game";
 import "./scss/style.scss";
-import { GameConstants } from "../../common/src/constants";
+import { Game } from "./game/game";
+import { UiManager } from "./ui";
+import { Application } from "pixi.js";
 import { getElem } from "./utils";
-import { Config } from "./config";
 
-const game = new Game();
+export class App {
+    uiManager = new UiManager(this);
+    pixi = new Application();
+    game = new Game(this);
 
-const playButton = getElem<HTMLButtonElement>("#play-btn");
-const nameInput = getElem<HTMLInputElement>("#name-input");
-nameInput.maxLength = GameConstants.nameMaxLength;
+    async init(): Promise<void> {
+        await this.pixi.init({
+            canvas: getElem<HTMLCanvasElement>("#game-canvas"),
+            resizeTo: window,
+            resolution: window.devicePixelRatio ?? 1,
+            antialias: true,
+            preference: "webgl",
+            background: 0x000000
+        });
+        this.pixi.canvas.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+        });
 
-const serverSelect = getElem<HTMLSelectElement>("#server-selector");
-for (const serverId in Config.servers) {
-    const server = Config.servers[serverId];
-    const option = document.createElement("option");
-    serverSelect.appendChild(option);
-    option.value = serverId;
-    option.innerText = server.name;
+        this.game.init();
 
-    fetch(`http${server.https ? "s" : ""}://${server.address}/server_info`).then(async(res) => {
-        const data = await res.json();
-        option.innerText = `${server.name} - ${data.playerCount} Players`;
-    }).catch(err => {
-        console.error(`Failed to fetch server info for region ${server.name}: ${err}`);
-    });
+        await this.game.loadAssets();
+
+        app.uiManager.playButton.disabled = false;
+    }
 }
 
-playButton.addEventListener("click", () => {
-    const server = Config.servers[serverSelect.value];
-    game.connect(`ws${server.https ? "s" : ""}://${server.address}/play`);
-});
+const app = new App();
+
+await app.init();

@@ -1,5 +1,5 @@
 import { GameBitStream, EntityType, type Packet, PacketType, PacketStream } from "../../../common/src/net";
-import { Application, Assets, Graphics } from "pixi.js";
+import { type Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { EntityPool } from "../../../common/src/utils/entityPool";
@@ -10,9 +10,12 @@ import { InputManager } from "./inputManager";
 import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { Projectile } from "./entities/projectile";
+import { type App } from "../main";
 
 export class Game {
+    app: App;
     socket?: WebSocket;
+    pixi: Application;
 
     running = false;
 
@@ -33,39 +36,26 @@ export class Game {
         zIndex: -99
     });
 
-    pixi = new Application();
+    constructor(app: App) {
+        this.app = app;
+        this.pixi = app.pixi;
+    }
 
-    constructor() {
-        void (async() => {
-            await this.pixi.init({
-                canvas: getElem<HTMLCanvasElement>("#game-canvas"),
-                resizeTo: window,
-                resolution: window.devicePixelRatio ?? 1,
-                antialias: true,
-                preference: "webgl",
-                background: 0x000000
-            });
+    init(): void {
+        this.pixi.ticker.add(this.render.bind(this));
+        this.pixi.renderer.on("resize", this.resize.bind(this));
+        this.pixi.stage.addChild(this.camera.container);
+        this.camera.resize();
+    }
 
-            this.pixi.ticker.add(this.render.bind(this));
-            this.pixi.renderer.on("resize", this.resize.bind(this));
-            this.pixi.stage.addChild(this.camera.container);
-            this.camera.resize();
-
-            this.pixi.canvas.addEventListener("contextmenu", (e) => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-            });
-
-            // TODO: assets loader
-            await Assets.load("./game/player.svg");
-            await Assets.load("./game/projectile.svg");
-
-            getElem<HTMLButtonElement>("#play-btn").disabled = false;
-        })();
+    async loadAssets(): Promise<void> {
+        await Assets.load("./game/player.svg");
+        await Assets.load("./game/projectile.svg");
     }
 
     connect(address: string): void {
+        this.app.uiManager.playButton.disabled = true;
+
         this.socket = new WebSocket(address);
 
         this.socket.binaryType = "arraybuffer";
@@ -113,14 +103,17 @@ export class Game {
 
     startGame(): void {
         if (this.running) return;
+        const ui = this.app.uiManager;
+        ui.gameDiv.style.display = "";
+        ui.homeDiv.style.display = "none";
         this.running = true;
-        getElem("#game").style.display = "";
-        getElem("#home").style.display = "none";
     }
 
     endGame(): void {
-        getElem("#game").style.display = "none";
-        getElem("#home").style.display = "";
+        const ui = this.app.uiManager;
+        ui.gameDiv.style.display = "none";
+        ui.homeDiv.style.display = "";
+        ui.playButton.disabled = false;
         this.running = false;
 
         // reset stuff

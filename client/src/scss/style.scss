@@ -6,6 +6,10 @@ body {
     background: black;
 }
 
+:root {
+    --background-normal: rgb(231, 240, 254);
+    --background-accent: rgba(0, 255, 255, 0.6);
+}
 
 #home {
     width: 100vw;
@@ -16,10 +20,47 @@ body {
         place-self: center;
         justify-self: center;
         display: flex;
+        padding: 10px;
 
         #play-container {
             display: flex;
             flex-direction: column;
+            gap: 4px;
         }
     }
+}
+
+button {
+    padding: 8px;
+    font-size: 20px;
+    font-weight: 900;
+    outline: none;
+    transition: transform 150ms;
+    cursor: pointer;
+    box-shadow: 0px 2px 5px cyan;
+    border: solid 1px cyan;
+    color: white;
+    background-color: var(--background-accent);
+}
+
+button:hover {
+    transform: scale(1.15);
+}
+
+select {
+    outline: none;
+    border: none;
+    padding: 8px;
+    border-radius: 0px;
+    background-color: var(--background-normal);
+}
+
+input {
+    outline: none;
+    padding: 7px;
+    font-family: 'Orbitron';
+    font-size: 15px;
+    color: rgb(71, 71, 71);
+    border: none;
+    background-color: var(--background-normal);
 }
