@@ -1,4 +1,5 @@
-import "./scss/style.scss";
+import "./scss/home.scss";
+import "./scss/game.scss";
 import { Game } from "./game/game";
 import { UiManager } from "./ui";
 import { Application } from "pixi.js";

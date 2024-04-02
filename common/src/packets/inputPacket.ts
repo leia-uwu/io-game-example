@@ -3,7 +3,6 @@ import { Vec2 } from "../utils/vector";
 
 export class InputPacket extends Packet {
     readonly type = PacketType.Input;
-    readonly allocBytes = 32;
 
     direction = Vec2.new(0, 0);
     mouseDown = false;

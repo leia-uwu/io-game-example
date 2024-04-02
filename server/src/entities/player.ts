@@ -12,6 +12,7 @@ import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { GameConstants } from "../../../common/src/constants";
 import { Projectile } from "./projectile";
+import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 
 export class Player extends ServerEntity<EntityType.Player> {
     readonly type = EntityType.Player;
@@ -37,6 +38,8 @@ export class Player extends ServerEntity<EntityType.Player> {
     }
 
     dead = false;
+
+    kills = 0;
 
     firstPacket = true;
 
@@ -88,13 +91,15 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         if (this.shoot && this.shotCooldown < this.game.now) {
             this.shotCooldown = this.game.now + GameConstants.player.fireDelay;
-            const projectile = new Projectile(this.game, this.position, this.direction);
+            const projectile = new Projectile(this.game, this.position, this.direction, this);
             this.game.grid.addEntity(projectile);
         }
 
-        for (const player of this.game.players) {
-            if (player !== this) {
-                const collision = this.hitbox.getIntersection(player.hitbox);
+        const entities = this.game.grid.intersectsHitbox(this.hitbox);
+
+        for (const entity of entities) {
+            if (entity instanceof Player && entity !== this) {
+                const collision = this.hitbox.getIntersection(entity.hitbox);
                 if (collision) {
                     this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen));
                 }
@@ -111,10 +116,17 @@ export class Player extends ServerEntity<EntityType.Player> {
         }
     }
 
-    damage(amount: number) {
+    damage(amount: number, source: Player) {
         this.health -= amount;
         if (this.health <= 0) {
             this.dead = true;
+            this.game.grid.remove(this);
+
+            source.kills++;
+
+            const gameOverPacket = new GameOverPacket();
+            gameOverPacket.kills = this.kills;
+            this.sendPacket(gameOverPacket);
         }
     }
 
@@ -174,17 +186,18 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         packetStream.serializePacket(updatePacket);
 
-        for (const packet of this._packetsToSend) {
+        for (const packet of this.packetsToSend) {
             packetStream.serializePacket(packet);
         }
+        this.packetsToSend.length = 0;
         const buffer = packetStream.getBuffer();
         this.sendData(buffer);
     }
 
-    private readonly _packetsToSend: Packet[] = [];
+    readonly packetsToSend: Packet[] = [];
 
     sendPacket(packet: Packet): void {
-        this._packetsToSend.push(packet);
+        this.packetsToSend.push(packet);
     }
 
     sendData(data: ArrayBuffer): void {
@@ -216,13 +229,20 @@ export class Player extends ServerEntity<EntityType.Player> {
             case PacketType.Input: {
                 const packet = new InputPacket();
                 packet.deserialize(stream);
-                this.direction = packet.direction;
-                this.mouseDown = packet.mouseDown;
-                this.shoot = packet.shoot;
-                this.setDirty();
+                this.processInput(packet);
                 break;
             }
         }
+    }
+
+    processInput(packet: InputPacket): void {
+        // if the direction changed set to dirty
+        if (!Vec2.equals(this.direction, packet.direction)) {
+            this.setDirty();
+        }
+        this.direction = packet.direction;
+        this.mouseDown = packet.mouseDown;
+        this.shoot = packet.shoot;
     }
 
     get data(): Required<EntitiesNetData[EntityType.Player]> {

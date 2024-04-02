@@ -18,8 +18,8 @@ export class Game {
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
-    width = 512;
-    height = 512;
+    width = 64;
+    height = 64;
     mapDirty = false;
 
     // TODO: id allocator

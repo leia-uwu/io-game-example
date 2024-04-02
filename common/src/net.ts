@@ -7,7 +7,8 @@ export enum PacketType {
     None,
     Join,
     Update,
-    Input
+    Input,
+    GameOver
 }
 
 export enum EntityType {
@@ -233,7 +234,6 @@ export class GameBitStream extends BitStream {
 
 export abstract class Packet {
     abstract readonly type: PacketType;
-    abstract readonly allocBytes: number;
 
     abstract serialize(stream: GameBitStream): void;
     abstract deserialize(stream: GameBitStream): void;

@@ -11,11 +11,14 @@ import { InputPacket } from "../../../common/src/packets/inputPacket";
 import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { Projectile } from "./entities/projectile";
 import { type App } from "../main";
+import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
+import { GameUi } from "./gameUi";
 
 export class Game {
     app: App;
     socket?: WebSocket;
     pixi: Application;
+    ui = new GameUi(this);
 
     running = false;
 
@@ -39,6 +42,7 @@ export class Game {
     constructor(app: App) {
         this.app = app;
         this.pixi = app.pixi;
+        this.ui.setupUi();
     }
 
     init(): void {
@@ -95,6 +99,11 @@ export class Game {
                     this.startGame();
                     break;
                 }
+                case PacketType.GameOver: {
+                    const packet = new GameOverPacket();
+                    packet.deserialize(stream);
+                    this.ui.showGameOverScreen(packet);
+                }
             }
 
             stream.readAlignToNextByte();
@@ -110,6 +119,7 @@ export class Game {
     }
 
     endGame(): void {
+        if (this.socket?.readyState !== this.socket?.CLOSED) this.socket?.close();
         const ui = this.app.uiManager;
         ui.gameDiv.style.display = "none";
         ui.homeDiv.style.display = "";
@@ -117,6 +127,10 @@ export class Game {
         this.running = false;
 
         // reset stuff
+        for (const entity of this.entities) {
+            entity.destroy();
+        }
+        this.entities.clear();
         this.camera.clear();
     }
 

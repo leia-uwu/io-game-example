@@ -94,7 +94,6 @@ enum UpdateFlags {
 
 export class UpdatePacket extends Packet {
     readonly type = PacketType.Update;
-    readonly allocBytes = 2 ** 16;
 
     deletedEntities: number[] = [];
     partialEntities: Entity[] = [];

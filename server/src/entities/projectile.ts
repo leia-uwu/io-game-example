@@ -5,6 +5,7 @@ import { MathUtils } from "../../../common/src/utils/math";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
 import { type Game } from "../game";
 import { ServerEntity } from "./entity";
+import { Player } from "./player";
 
 export class Projectile extends ServerEntity {
     readonly type = EntityType.Projectile;
@@ -23,10 +24,13 @@ export class Projectile extends ServerEntity {
         this._position = pos;
     }
 
-    constructor(game: Game, position: Vector, direction: Vector) {
+    source: Player;
+
+    constructor(game: Game, position: Vector, direction: Vector, source: Player) {
         super(game, position);
         this.direction = direction;
         this.hitbox = new CircleHitbox(1, position);
+        this.source = source;
     }
 
     tick(): void {
@@ -42,9 +46,13 @@ export class Projectile extends ServerEntity {
         this.game.grid.updateEntity(this);
         this.setDirty();
 
-        for (const player of this.game.players) {
-            if (player.hitbox.collidesWith(this.hitbox)) {
-                player.damage(15);
+        const entities = this.game.grid.intersectsHitbox(this.hitbox);
+        for (const entity of entities) {
+            if (!(entity instanceof Player)) continue;
+            if (entity.dead) continue;
+
+            if (entity.hitbox.collidesWith(this.hitbox)) {
+                entity.damage(15, this.source);
                 this.destroy();
             }
         }
