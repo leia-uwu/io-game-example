@@ -1,4 +1,4 @@
-import { Container, Sprite } from "pixi.js";
+import { Sprite } from "pixi.js";
 import { type Game } from "../game";
 import { ClientEntity } from "./entity";
 import { EntityType } from "../../../../common/src/net";
@@ -9,7 +9,6 @@ import { Camera } from "../camera";
 export class Projectile extends ClientEntity<EntityType.Projectile> {
     readonly type = EntityType.Projectile;
 
-    container = new Container();
     trail = Sprite.from("./game/projectile.svg");
 
     direction = Vec2.new(0, 0);
@@ -18,12 +17,12 @@ export class Projectile extends ClientEntity<EntityType.Projectile> {
         super(game, id);
 
         this.container.addChild(this.trail);
-        this.game.camera.addObject(this.container);
         this.trail.anchor.set(1, 0.5);
     }
 
     override updateFromData(data: EntitiesNetData[EntityType.Projectile], isNew: boolean): void {
-        this.interpolationTick = 0;
+        super.updateFromData(data, isNew);
+
         this.oldPosition = isNew ? data.position : Vec2.clone(this.position);
         this.position = data.position;
 

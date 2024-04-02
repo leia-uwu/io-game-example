@@ -11,7 +11,6 @@ import { MathUtils } from "../../../../common/src/utils/math";
 export class Player extends ClientEntity<EntityType.Player> {
     readonly type = EntityType.Player;
 
-    container = new Container();
     image = Sprite.from("./game/player.svg");
 
     // container for stuff that doesn't rotate
@@ -39,7 +38,7 @@ export class Player extends ClientEntity<EntityType.Player> {
 
         this.image.tint = GameConstants.player[this.id === game.activePlayerID ? "activeTint" : "enemyTint"];
 
-        this.game.camera.addObject(this.container);
+        this.staticContainer.zIndex = 3;
         this.game.camera.addObject(this.staticContainer);
 
         this.nameText.text = this.game.playerNames.get(this.id) ?? "Unknown Player";
@@ -51,7 +50,8 @@ export class Player extends ClientEntity<EntityType.Player> {
     }
 
     override updateFromData(data: EntitiesNetData[EntityType.Player], isNew: boolean): void {
-        this.interpolationTick = 0;
+        super.updateFromData(data, isNew);
+
         this.oldPosition = isNew ? data.position : Vec2.clone(this.position);
         this.position = data.position;
         this.oldDirection = Vec2.clone(this.direction);

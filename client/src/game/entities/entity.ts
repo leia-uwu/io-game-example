@@ -1,3 +1,4 @@
+import { Container } from "pixi.js";
 import { type EntityType } from "../../../../common/src/net";
 import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { MathUtils } from "../../../../common/src/utils/math";
@@ -10,12 +11,18 @@ export abstract class ClientEntity<T extends EntityType = EntityType> {
     id: number;
     position = Vec2.new(0, 0);
 
+    container = new Container();
+
     constructor(game: Game, id: number) {
         this.game = game;
         this.id = id;
+
+        this.game.camera.addObject(this.container);
     }
 
-    abstract updateFromData(data: EntitiesNetData[T], isNew: boolean): void;
+    updateFromData(_data: EntitiesNetData[T], _isNew: boolean): void {
+        this.interpolationTick = 0;
+    }
 
     abstract destroy(): void;
 

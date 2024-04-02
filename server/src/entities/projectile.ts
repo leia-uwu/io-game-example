@@ -14,6 +14,7 @@ export class Projectile extends ServerEntity {
 
     speed = 100;
     damage = 15;
+    dead = false;
 
     get position(): Vector {
         return this.hitbox.position;
@@ -34,9 +35,7 @@ export class Projectile extends ServerEntity {
     }
 
     tick(): void {
-        if (this.position.x <= 0 || this.position.x >= this.game.width ||
-            this.position.y <= 0 || this.position.y >= this.game.height
-        ) {
+        if (this.dead) {
             this.destroy();
             return;
         }
@@ -53,8 +52,13 @@ export class Projectile extends ServerEntity {
 
             if (entity.hitbox.collidesWith(this.hitbox)) {
                 entity.damage(15, this.source);
-                this.destroy();
+                this.dead = true;
             }
+        }
+
+        if (this.position.x <= 0 || this.position.x >= this.game.width ||
+            this.position.y <= 0 || this.position.y >= this.game.height) {
+            this.dead = true;
         }
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);
         this.position.y = MathUtils.clamp(this.position.y, 0, this.game.height);
