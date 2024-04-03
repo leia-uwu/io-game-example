@@ -180,19 +180,18 @@ export class Player extends ServerEntity<EntityType.Player> {
 
         this.firstPacket = false;
 
-        const packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
-
-        packetStream.stream.index = 0;
-
-        packetStream.serializePacket(updatePacket);
+        this.packetStream.stream.index = 0;
+        this.packetStream.serializePacket(updatePacket);
 
         for (const packet of this.packetsToSend) {
-            packetStream.serializePacket(packet);
+            this.packetStream.serializePacket(packet);
         }
+
         this.packetsToSend.length = 0;
-        const buffer = packetStream.getBuffer();
+        const buffer = this.packetStream.getBuffer();
         this.sendData(buffer);
     }
+    packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
 
     readonly packetsToSend: Packet[] = [];
 
