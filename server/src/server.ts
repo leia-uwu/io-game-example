@@ -23,7 +23,7 @@ app.listen(Config.host, Config.port, () => {
     console.log(`Websocket server running on ${Config.host}:${Config.port}`);
 });
 
-const game = new Game();
+const game = new Game(Config);
 
 /**
  * Apply CORS headers to a response.

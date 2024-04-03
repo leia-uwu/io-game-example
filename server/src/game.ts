@@ -6,6 +6,7 @@ import { Grid } from "./grid";
 import { EntityPool } from "../../common/src/utils/entityPool";
 import { GameConstants } from "../../common/src/constants";
 import NanoTimer from "nanotimer";
+import { ServerConfig } from "./config";
 
 export class Game {
     players = new EntityPool<Player>();
@@ -34,8 +35,8 @@ export class Game {
 
     timer = new NanoTimer();
 
-    constructor() {
-        this.timer.setInterval(this.tick.bind(this), "", "30m");
+    constructor(config: ServerConfig) {
+        this.timer.setInterval(this.tick.bind(this), "", `${1000 / config.tps}m`);
     }
 
     addPlayer(socket: WebSocket<PlayerData>): Player {

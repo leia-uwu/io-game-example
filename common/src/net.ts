@@ -264,6 +264,6 @@ export class PacketStream {
     }
 
     getBuffer(): ArrayBuffer {
-        return this.stream.buffer.slice(0, Math.ceil(this.stream.index / 8));
+        return this.stream.buffer.slice(0, this.stream.byteIndex);
     }
 }
