@@ -48,6 +48,7 @@ export class Projectile extends ServerEntity {
         const entities = this.game.grid.intersectsHitbox(this.hitbox);
         for (const entity of entities) {
             if (!(entity instanceof Player)) continue;
+            if (entity === this.source) continue;
             if (entity.dead) continue;
 
             if (entity.hitbox.collidesWith(this.hitbox)) {
