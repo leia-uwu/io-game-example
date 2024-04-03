@@ -1,6 +1,6 @@
 {
-    "name": "io-game-template",
-    "version": "1.0.0",
+    "name": "io-game-example",
+    "version": "0.0.1",
     "description": "",
     "scripts": {
         "lint": "eslint . --fix --ext .ts",
