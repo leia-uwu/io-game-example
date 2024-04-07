@@ -1,3 +1,4 @@
+import { GameConstants } from "../../../common/src/constants";
 import { EntityType } from "../../../common/src/net";
 import { type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox } from "../../../common/src/utils/hitbox";
@@ -12,9 +13,6 @@ export class Projectile extends ServerEntity {
     readonly type = EntityType.Projectile;
     hitbox: CircleHitbox;
     direction: Vector;
-
-    speed = 100;
-    damage = 15;
     dead = false;
 
     get position(): Vector {
@@ -31,7 +29,7 @@ export class Projectile extends ServerEntity {
     constructor(game: Game, position: Vector, direction: Vector, source: Player) {
         super(game, position);
         this.direction = direction;
-        this.hitbox = new CircleHitbox(1, position);
+        this.hitbox = new CircleHitbox(GameConstants.projectile.radius, position);
         this.source = source;
     }
 
@@ -41,7 +39,7 @@ export class Projectile extends ServerEntity {
             return;
         }
 
-        const speed = Vec2.mul(this.direction, this.speed);
+        const speed = Vec2.mul(this.direction, GameConstants.projectile.speed);
         this.position = Vec2.add(this.position, Vec2.mul(speed, this.game.dt));
         this.game.grid.updateEntity(this);
         this.setDirty();
@@ -52,7 +50,7 @@ export class Projectile extends ServerEntity {
             if (entity === this.source) continue;
 
             if (entity.hitbox.collidesWith(this.hitbox)) {
-                entity.damage(15, this.source);
+                entity.damage(GameConstants.projectile.damage, this.source);
                 this.dead = true;
             }
         }
@@ -73,7 +71,8 @@ export class Projectile extends ServerEntity {
         return {
             position: this.position,
             full: {
-                direction: this.direction
+                direction: this.direction,
+                shooterId: this.source.id
             }
         };
     }

@@ -17,6 +17,7 @@ export interface EntitiesNetData {
         position: Vector
         full?: {
             direction: Vector
+            shooterId: number
         }
     }
     [EntityType.Asteroid]: {
@@ -63,12 +64,13 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
     },
     [EntityType.Projectile]: {
         partialSize: 6,
-        fullSize: 4,
+        fullSize: 6,
         serializePartial(stream, data) {
             stream.writePosition(data.position);
         },
         serializeFull(stream, data) {
             stream.writeUnit(data.direction, 16);
+            stream.writeUint16(data.shooterId);
         },
         deserializePartial(stream) {
             return {
@@ -77,7 +79,8 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         },
         deserializeFull(stream) {
             return {
-                direction: stream.readUnit(16)
+                direction: stream.readUnit(16),
+                shooterId: stream.readUint16()
             };
         }
     },

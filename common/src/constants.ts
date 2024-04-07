@@ -11,6 +11,12 @@ export const GameConstants = {
         defaultHealth: 100,
         fireDelay: 250
     },
+    projectile: {
+        damage: 15,
+        speed: 100,
+        radius: 0.8,
+        trailMaxLength: 25
+    },
     asteroids: {
         maxRadius: 3,
         minRadius: 0.5,
