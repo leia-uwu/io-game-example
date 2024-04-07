@@ -4,6 +4,7 @@ import { CircleHitbox } from "../../../common/src/utils/hitbox";
 import { MathUtils } from "../../../common/src/utils/math";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
 import { type Game } from "../game";
+import { Asteroid } from "./asteroid";
 import { ServerEntity } from "./entity";
 import { Player } from "./player";
 
@@ -47,9 +48,8 @@ export class Projectile extends ServerEntity {
 
         const entities = this.game.grid.intersectsHitbox(this.hitbox);
         for (const entity of entities) {
-            if (!(entity instanceof Player)) continue;
+            if (!(entity instanceof Player || entity instanceof Asteroid)) continue;
             if (entity === this.source) continue;
-            if (entity.dead) continue;
 
             if (entity.hitbox.collidesWith(this.hitbox)) {
                 entity.damage(15, this.source);

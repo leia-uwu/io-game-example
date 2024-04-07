@@ -6,7 +6,10 @@ import { Grid } from "./grid";
 import { EntityPool } from "../../common/src/utils/entityPool";
 import { GameConstants } from "../../common/src/constants";
 import NanoTimer from "nanotimer";
-import { ServerConfig } from "./config";
+import { type ServerConfig } from "./config";
+import { EntityType } from "../../common/src/net";
+import { Asteroid } from "./entities/asteroid";
+import { Random } from "../../common/src/utils/random";
 
 export class Game {
     players = new EntityPool<Player>();
@@ -19,8 +22,8 @@ export class Game {
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
-    width = 64;
-    height = 64;
+    width = 128;
+    height = 128;
     mapDirty = false;
 
     // TODO: id allocator
@@ -59,6 +62,18 @@ export class Game {
         // update entities
         for (const entity of this.grid.entities.values()) {
             entity.tick();
+        }
+
+        // spawn asteroids
+
+        if (this.grid.byCategory[EntityType.Asteroid].size < 20) {
+            const asteroid = new Asteroid(this, Random.vector(
+                0, this.width,
+                0, this.height
+            ),
+            Random.float(GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius)
+            );
+            this.grid.addEntity(asteroid);
         }
 
         // Cache entity serializations

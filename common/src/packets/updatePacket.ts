@@ -19,6 +19,13 @@ export interface EntitiesNetData {
             direction: Vector
         }
     }
+    [EntityType.Asteroid]: {
+        position: Vector
+        full?: {
+            radius: number
+            variation: number
+        }
+    }
 }
 
 interface EntitySerialization<T extends EntityType> {
@@ -71,6 +78,28 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         deserializeFull(stream) {
             return {
                 direction: stream.readUnit(16)
+            };
+        }
+    },
+    [EntityType.Asteroid]: {
+        partialSize: 6,
+        fullSize: 3,
+        serializePartial(stream, data) {
+            stream.writePosition(data.position);
+        },
+        serializeFull(stream, data) {
+            stream.writeUint8(data.variation);
+            stream.writeFloat(data.radius, GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius, 8);
+        },
+        deserializePartial(stream) {
+            return {
+                position: stream.readPosition()
+            };
+        },
+        deserializeFull(stream) {
+            return {
+                variation: stream.readUint8(),
+                radius: stream.readFloat(GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius, 8)
             };
         }
     }

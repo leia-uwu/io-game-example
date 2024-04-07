@@ -1,7 +1,11 @@
+import { EntityType } from "../../common/src/net";
 import { type Hitbox, RectHitbox } from "../../common/src/utils/hitbox";
 import { MathUtils } from "../../common/src/utils/math";
 import { Vec2, type Vector } from "../../common/src/utils/vector";
+import { type Asteroid } from "./entities/asteroid";
 import { type ServerEntity } from "./entities/entity";
+import { type Player } from "./entities/player";
+import { type Projectile } from "./entities/projectile";
 
 /**
  * A Grid to filter collision detection of game entities
@@ -21,6 +25,12 @@ export class Grid {
 
     readonly entities = new Map<number, ServerEntity>();
 
+    readonly byCategory = {
+        [EntityType.Player]: new Set<Player>(),
+        [EntityType.Projectile]: new Set<Projectile>(),
+        [EntityType.Asteroid]: new Set<Asteroid>()
+    };
+
     constructor(width: number, height: number) {
         this.width = Math.floor(width / this.cellSize);
         this.height = Math.floor(height / this.cellSize);
@@ -38,6 +48,7 @@ export class Grid {
     addEntity(entity: ServerEntity): void {
         this.entities.set(entity.id, entity);
         entity.init();
+        (this.byCategory[entity.type] as Set<typeof entity>).add(entity);
         this.updateEntity(entity);
     }
 
@@ -70,6 +81,7 @@ export class Grid {
     remove(entity: ServerEntity): void {
         this.entities.delete(entity.id);
         this.removeFromGrid(entity);
+        (this.byCategory[entity.type] as Set<typeof entity>).delete(entity);
     }
 
     /**

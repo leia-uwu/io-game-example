@@ -13,6 +13,7 @@ import { JoinPacket } from "../../../common/src/packets/joinPacket";
 import { GameConstants } from "../../../common/src/constants";
 import { Projectile } from "./projectile";
 import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
+import { Asteroid } from "./asteroid";
 
 export class Player extends ServerEntity<EntityType.Player> {
     readonly type = EntityType.Player;
@@ -23,7 +24,7 @@ export class Player extends ServerEntity<EntityType.Player> {
     shoot = false;
     shotCooldown = 0;
 
-    hitbox = new CircleHitbox(1.5);
+    hitbox = new CircleHitbox(GameConstants.player.radius);
 
     private _health = GameConstants.player.defaultHealth;
 
@@ -98,11 +99,12 @@ export class Player extends ServerEntity<EntityType.Player> {
         const entities = this.game.grid.intersectsHitbox(this.hitbox);
 
         for (const entity of entities) {
-            if (entity instanceof Player && entity !== this) {
-                const collision = this.hitbox.getIntersection(entity.hitbox);
-                if (collision) {
-                    this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen));
-                }
+            if (!(entity instanceof Player || entity instanceof Asteroid)) continue;
+            if (entity === this) continue;
+
+            const collision = this.hitbox.getIntersection(entity.hitbox);
+            if (collision) {
+                this.position = Vec2.sub(this.position, Vec2.mul(collision.dir, collision.pen));
             }
         }
 
@@ -191,6 +193,7 @@ export class Player extends ServerEntity<EntityType.Player> {
         const buffer = this.packetStream.getBuffer();
         this.sendData(buffer);
     }
+
     packetStream = new PacketStream(GameBitStream.alloc(1 << 16));
 
     readonly packetsToSend: Packet[] = [];

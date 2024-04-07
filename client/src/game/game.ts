@@ -13,6 +13,8 @@ import { Projectile } from "./entities/projectile";
 import { type App } from "../main";
 import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { GameUi } from "./gameUi";
+import { GameConstants } from "../../../common/src/constants";
+import { Asteroid } from "./entities/asteroid";
 
 export class Game {
     app: App;
@@ -55,6 +57,9 @@ export class Game {
     async loadAssets(): Promise<void> {
         await Assets.load("./game/player.svg");
         await Assets.load("./game/projectile.svg");
+        for (let i = 0; i < GameConstants.asteroids.variations; i++) {
+            await Assets.load(`./game/asteroid-${i}.svg`);
+        }
     }
 
     connect(address: string): void {
@@ -137,6 +142,12 @@ export class Game {
     lastUpdateTime = 0;
     serverDt = 0;
 
+    static typeToEntity = {
+        [EntityType.Player]: Player,
+        [EntityType.Projectile]: Projectile,
+        [EntityType.Asteroid]: Asteroid
+    };
+
     /**
      * Process a game update packet
      */
@@ -167,17 +178,10 @@ export class Game {
         for (const entityData of packet.fullEntities) {
             let entity = this.entities.get(entityData.id);
             let isNew = false;
+
             if (!entity) {
                 isNew = true;
-                switch (entityData.type) {
-                    case EntityType.Player: {
-                        entity = new Player(this, entityData.id);
-                        break;
-                    }
-                    case EntityType.Projectile: {
-                        entity = new Projectile(this, entityData.id);
-                    }
-                }
+                entity = new Game.typeToEntity[entityData.type](this, entityData.id);
                 this.entities.add(entity);
             }
             entity.updateFromData(entityData.data, isNew);
