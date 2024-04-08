@@ -1,9 +1,7 @@
-import { type GameBitStream, Packet, PacketType } from "../net";
+import { type GameBitStream, Packet, ClientToServerPackets } from "../net";
 import { Vec2 } from "../utils/vector";
 
 export class InputPacket extends Packet {
-    readonly type = PacketType.Input;
-
     direction = Vec2.new(0, 0);
     mouseDown = false;
     shoot = false;
@@ -20,3 +18,5 @@ export class InputPacket extends Packet {
         this.direction = stream.readUnit(16);
     }
 }
+
+ClientToServerPackets.register(InputPacket);

@@ -2,7 +2,7 @@ import { type WebSocket } from "uWebSockets.js";
 import { ServerEntity } from "./entity";
 import { type PlayerData } from "../server";
 import { Vec2, type Vector } from "../../../common/src/utils/vector";
-import { GameBitStream, EntityType, PacketType, type Packet, PacketStream } from "../../../common/src/net";
+import { GameBitStream, EntityType, type Packet, PacketStream } from "../../../common/src/net";
 import { type Game } from "../game";
 import { UpdatePacket, type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox, RectHitbox } from "../../../common/src/utils/hitbox";
@@ -183,10 +183,10 @@ export class Player extends ServerEntity<EntityType.Player> {
         this.firstPacket = false;
 
         this.packetStream.stream.index = 0;
-        this.packetStream.serializePacket(updatePacket);
+        this.packetStream.serializeServerPacket(updatePacket);
 
         for (const packet of this.packetsToSend) {
-            this.packetStream.serializePacket(packet);
+            this.packetStream.serializeServerPacket(packet);
         }
 
         this.packetsToSend.length = 0;
@@ -212,29 +212,31 @@ export class Player extends ServerEntity<EntityType.Player> {
 
     processMessage(message: ArrayBuffer): void {
         const packetStream = new PacketStream(message);
-        const stream = packetStream.stream;
-        const packetType = packetStream.readPacketType();
 
-        switch (packetType) {
-            case PacketType.Join: {
-                const packet = new JoinPacket();
-                packet.deserialize(stream);
-                this.name = packet.name.trim();
-                if (!this.name) this.name = GameConstants.player.defaultName;
-                this.socket.getUserData().joined = true;
-                this.game.players.add(this);
-                this.game.grid.addEntity(this);
+        const packet = packetStream.deserializeClientPacket();
 
-                console.log(`"${this.name}" joined the game`);
+        if (packet === undefined) return;
+
+        switch (true) {
+            case packet instanceof JoinPacket: {
+                this.join(packet);
                 break;
             }
-            case PacketType.Input: {
-                const packet = new InputPacket();
-                packet.deserialize(stream);
+            case packet instanceof InputPacket: {
                 this.processInput(packet);
                 break;
             }
         }
+    }
+
+    join(packet: JoinPacket): void {
+        this.name = packet.name.trim();
+        if (!this.name) this.name = GameConstants.player.defaultName;
+        this.socket.getUserData().joined = true;
+        this.game.players.add(this);
+        this.game.grid.addEntity(this);
+
+        console.log(`"${this.name}" joined the game`);
     }
 
     processInput(packet: InputPacket): void {

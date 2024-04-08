@@ -1,9 +1,7 @@
 import { GameConstants } from "../constants";
-import { type GameBitStream, Packet, PacketType } from "../net";
+import { type GameBitStream, Packet, ClientToServerPackets } from "../net";
 
 export class JoinPacket extends Packet {
-    readonly type = PacketType.Join;
-
     name = "";
 
     override serialize(stream: GameBitStream): void {
@@ -14,3 +12,5 @@ export class JoinPacket extends Packet {
         this.name = stream.readASCIIString(GameConstants.player.nameMaxLength);
     }
 }
+
+ClientToServerPackets.register(JoinPacket);

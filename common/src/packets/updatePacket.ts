@@ -1,5 +1,5 @@
 import { GameConstants } from "../constants";
-import { type GameBitStream, EntityType, Packet, PacketType } from "../net";
+import { type GameBitStream, EntityType, Packet, ServerToClientPackets } from "../net";
 import { type Vector } from "../utils/vector";
 
 export interface EntitiesNetData {
@@ -125,8 +125,6 @@ enum UpdateFlags {
 }
 
 export class UpdatePacket extends Packet {
-    readonly type = PacketType.Update;
-
     deletedEntities: number[] = [];
     partialEntities: Entity[] = [];
     fullEntities: Array<Entity & { data: Required<EntitiesNetData[Entity["type"]]> }> = [];
@@ -316,3 +314,5 @@ export class UpdatePacket extends Packet {
         }
     }
 }
+
+ServerToClientPackets.register(UpdatePacket);

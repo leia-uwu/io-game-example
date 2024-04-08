@@ -1,4 +1,4 @@
-import { GameBitStream, EntityType, type Packet, PacketType, PacketStream } from "../../../common/src/net";
+import { GameBitStream, EntityType, type Packet, PacketStream } from "../../../common/src/net";
 import { type Application, Assets, Graphics } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
@@ -92,26 +92,19 @@ export class Game {
     onMessage(data: ArrayBuffer): void {
         const packetStream = new PacketStream(data);
         while (true) {
-            const packetType = packetStream.readPacketType();
-            if (packetType === PacketType.None) break;
+            const packet = packetStream.deserializeServerPacket();
+            if (packet === undefined) break;
 
-            const stream = packetStream.stream;
-            switch (packetType) {
-                case PacketType.Update: {
-                    const packet = new UpdatePacket();
-                    packet.deserialize(stream);
+            switch (true) {
+                case packet instanceof UpdatePacket: {
                     this.updateFromPacket(packet);
                     this.startGame();
                     break;
                 }
-                case PacketType.GameOver: {
-                    const packet = new GameOverPacket();
-                    packet.deserialize(stream);
+                case packet instanceof GameOverPacket: {
                     this.ui.showGameOverScreen(packet);
                 }
             }
-
-            stream.readAlignToNextByte();
         }
     }
 
@@ -226,7 +219,7 @@ export class Game {
     sendPacket(packet: Packet) {
         if (this.socket && this.socket.readyState === this.socket.OPEN) {
             const packetStream = new PacketStream(GameBitStream.alloc(128));
-            packetStream.serializePacket(packet);
+            packetStream.serializeClientPacket(packet);
             this.socket.send(packetStream.getBuffer());
         }
     }

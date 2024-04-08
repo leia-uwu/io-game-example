@@ -3,14 +3,6 @@ import { type Vector } from "./utils/vector";
 import { GameConstants } from "./constants";
 import { MathUtils } from "./utils/math";
 
-export enum PacketType {
-    None,
-    Join,
-    Update,
-    Input,
-    GameOver
-}
-
 export enum EntityType {
     Player,
     Projectile,
@@ -234,11 +226,24 @@ export class GameBitStream extends BitStream {
 }
 
 export abstract class Packet {
-    abstract readonly type: PacketType;
-
     abstract serialize(stream: GameBitStream): void;
     abstract deserialize(stream: GameBitStream): void;
 }
+
+class PacketRegister {
+    private _nextTypeId = 1;
+    readonly typeToId: Record<string, number> = {};
+    readonly idToCtor: Array<new () => Packet> = [];
+
+    register(packet: typeof Packet & (new () => Packet)) {
+        const id = this._nextTypeId++;
+        this.typeToId[packet.name] = id;
+        this.idToCtor[id] = packet;
+    }
+}
+
+export const ClientToServerPackets = new PacketRegister();
+export const ServerToClientPackets = new PacketRegister();
 
 export class PacketStream {
     stream: GameBitStream;
@@ -251,17 +256,41 @@ export class PacketStream {
         }
     }
 
-    serializePacket(packet: Packet) {
-        this.stream.writeUint8(packet.type);
-        packet.serialize(this.stream);
-        this.stream.writeAlignToNextByte();
+    serializeServerPacket(packet: Packet) {
+        this._serializePacket(packet, ServerToClientPackets);
     }
 
-    readPacketType(): PacketType {
+    deserializeServerPacket(): Packet | undefined {
+        return this._deserliazePacket(ServerToClientPackets);
+    }
+
+    serializeClientPacket(packet: Packet) {
+        this._serializePacket(packet, ClientToServerPackets);
+    }
+
+    deserializeClientPacket(): Packet | undefined {
+        return this._deserliazePacket(ClientToServerPackets);
+    }
+
+    private _deserliazePacket(register: PacketRegister): Packet | undefined {
         if (this.stream.length - this.stream.byteIndex * 8 >= 1) {
-            return this.stream.readUint8();
+            const id = this.stream.readUint8();
+            const packet = new register.idToCtor[id]();
+            packet.deserialize(this.stream);
+            this.stream.readAlignToNextByte();
+            return packet;
         }
-        return PacketType.None;
+        return undefined;
+    }
+
+    private _serializePacket(packet: Packet, register: PacketRegister) {
+        const type = register.typeToId[packet.constructor.name];
+        if (type === undefined) {
+            throw new Error(`Unknown packet type: ${packet.constructor.name}, did you forget to register or import it?`);
+        }
+        this.stream.writeUint8(type);
+        packet.serialize(this.stream);
+        this.stream.writeAlignToNextByte();
     }
 
     getBuffer(): ArrayBuffer {

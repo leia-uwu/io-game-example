@@ -1,8 +1,6 @@
-import { type GameBitStream, Packet, PacketType } from "../net";
+import { type GameBitStream, Packet, ServerToClientPackets } from "../net";
 
 export class GameOverPacket extends Packet {
-    readonly type = PacketType.GameOver;
-
     kills = 0;
 
     override serialize(stream: GameBitStream): void {
@@ -13,3 +11,5 @@ export class GameOverPacket extends Packet {
         this.kills = stream.readUint8();
     }
 }
+
+ServerToClientPackets.register(GameOverPacket);
