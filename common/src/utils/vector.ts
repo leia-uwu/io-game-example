@@ -193,5 +193,17 @@ export const Vec2 = {
      */
     equals(a: Vector, b: Vector, epsilon = 0.001): boolean {
         return Math.abs(a.x - b.x) <= epsilon && Math.abs(a.y - b.y) <= epsilon;
+    },
+    /**
+     * Takes a polar representation of a vector and converts it into a cartesian one
+     * @param angle The vector's angle
+     * @param magnitude The vector's length. Defaults to 1
+     * @returns A new vector whose length is `magnitude` and whose direction is `angle`
+     */
+    fromPolar(angle: number, magnitude = 1): Vector {
+        return {
+            x: Math.cos(angle) * magnitude,
+            y: Math.sin(angle) * magnitude
+        };
     }
 };

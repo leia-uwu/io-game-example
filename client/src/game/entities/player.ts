@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite, Text } from "pixi.js";
+import { Color, Container, Graphics, Sprite, Text } from "pixi.js";
 import { type Game } from "../game";
 import { ClientEntity } from "./entity";
 import { EntityType } from "../../../../common/src/net";
@@ -6,7 +6,8 @@ import { type EntitiesNetData } from "../../../../common/src/packets/updatePacke
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
 import { GameConstants } from "../../../../common/src/constants";
-import { MathUtils } from "../../../../common/src/utils/math";
+import { EasinFunctions, MathUtils } from "../../../../common/src/utils/math";
+import { Random } from "../../../../common/src/utils/random";
 
 export class Player extends ClientEntity<EntityType.Player> {
     readonly type = EntityType.Player;
@@ -84,15 +85,27 @@ export class Player extends ClientEntity<EntityType.Player> {
         const pos = Camera.vecToScreen(
             Vec2.lerp(this.oldPosition, this.position, this.interpolationFactor)
         );
-        this.container.position.copyFrom(pos);
-        this.staticContainer.position.copyFrom(pos);
+        this.container.position = pos;
+        this.staticContainer.position = pos;
 
         const direction = Vec2.lerp(this.oldDirection, this.direction, this.interpolationFactor);
         this.container.rotation = Math.atan2(direction.y, direction.x);
 
-        if (this.id === this.game.activePlayerID) {
-            this.game.camera.position = this.container.position;
-        }
+        const dir = Math.atan2(-this.direction.y, -this.direction.x);
+        this.game.particleManager.spawnParticles(3, () => {
+            return {
+                position: this.position,
+                lifeTime: { min: 0.5, max: 2 },
+                blendMode: "add",
+                tint: new Color(`hsl(${Random.int(0, 360)}, 100%, 50%)`),
+                sprite: "./game/particle.svg",
+                rotation: { value: 0 },
+                alpha: { start: 1, end: 0, easing: EasinFunctions.sineIn },
+                scale: { start: 2, end: 0 },
+                speed: { start: 10, end: 0 },
+                direction: { min: dir - 0.2, max: dir + 0.2 }
+            };
+        });
     }
 
     override destroy(): void {

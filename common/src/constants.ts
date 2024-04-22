@@ -13,7 +13,7 @@ export const GameConstants = {
     },
     projectile: {
         damage: 15,
-        speed: 100,
+        speed: 80,
         radius: 0.8,
         trailMaxLength: 25
     },

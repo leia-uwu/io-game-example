@@ -15,6 +15,7 @@ import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { GameUi } from "./gameUi";
 import { GameConstants } from "../../../common/src/constants";
 import { Asteroid } from "./entities/asteroid";
+import { ParticleManager } from "./particle";
 
 export class Game {
     app: App;
@@ -36,6 +37,7 @@ export class Game {
 
     camera = new Camera(this);
     inputManager = new InputManager(this);
+    particleManager = new ParticleManager(this);
 
     mapGraphics = new Graphics({
         zIndex: -99
@@ -57,9 +59,12 @@ export class Game {
     async loadAssets(): Promise<void> {
         await Assets.load("./game/player.svg");
         await Assets.load("./game/projectile.svg");
+
         for (let i = 0; i < GameConstants.asteroids.variations; i++) {
             await Assets.load(`./game/asteroid-${i}.svg`);
         }
+
+        await Assets.load("./game/particle.svg");
     }
 
     connect(address: string): void {
@@ -239,7 +244,11 @@ export class Game {
         for (const entity of this.entities) {
             entity.render(dt);
         }
+        this.particleManager.render(dt);
 
+        if (this.activePlayer) {
+            this.camera.position = this.activePlayer.container.position;
+        }
         this.camera.render();
 
         const inputPacket = new InputPacket();

@@ -1,7 +1,7 @@
 import { type Vector } from "./vector";
 
 export const MathUtils = {
-
+    halfPI: Math.PI / 2,
     /**
      * Draws a line between two points and returns that line's angle
      * @param a The first point, used as the head of the vector
@@ -69,4 +69,17 @@ export const MathUtils = {
         return (a.x - c.x) * (b.y - c.y) - (a.y - c.y) * (b.x - c.x);
     }
 
+};
+
+export const EasinFunctions = {
+    linear: (t: number) => t,
+    sineIn: (t: number) => {
+        return 1 - Math.cos(t * MathUtils.halfPI);
+    },
+    sineOut: (t: number) => {
+        return Math.sin(t * MathUtils.halfPI);
+    },
+    sineInOut: (t: number) => {
+        return (1 - Math.cos(Math.PI * t)) / 2;
+    }
 };

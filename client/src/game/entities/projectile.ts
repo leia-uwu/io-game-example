@@ -35,7 +35,8 @@ export class Projectile extends ClientEntity<EntityType.Projectile> {
         this.position = data.position;
 
         if (data.full) {
-            this.container.rotation = Math.atan2(data.full.direction.y, data.full.direction.x);
+            this.direction = data.full.direction;
+            this.container.rotation = Math.atan2(this.direction.y, this.direction.x);
 
             const isEnemy = data.full.shooterId !== this.game.activePlayerID;
             this.trail.tint = GameConstants.player[isEnemy ? "enemyTint" : "activeTint"];
@@ -53,7 +54,8 @@ export class Projectile extends ClientEntity<EntityType.Projectile> {
                 Vec2.distance(this.initialPosition, this.position),
                 GameConstants.projectile.trailMaxLength)
         );
-        this.container.position.copyFrom(pos);
+
+        this.container.position = pos;
     }
 
     override destroy(): void {
