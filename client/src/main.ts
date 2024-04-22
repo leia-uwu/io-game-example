@@ -23,9 +23,7 @@ export class App {
             e.preventDefault();
         });
 
-        this.game.init();
-
-        await this.game.loadAssets();
+        await this.game.init();
 
         app.uiManager.playButton.disabled = false;
     }

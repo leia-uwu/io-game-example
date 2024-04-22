@@ -6,7 +6,7 @@ import { type EntitiesNetData } from "../../../../common/src/packets/updatePacke
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
 
-export class Asteroid extends ClientEntity<EntityType.Asteroid> {
+export class Asteroid extends ClientEntity {
     readonly type = EntityType.Asteroid;
 
     image = new Sprite();
@@ -27,7 +27,7 @@ export class Asteroid extends ClientEntity<EntityType.Asteroid> {
         this.position = data.position;
 
         if (data.full) {
-            this.image.texture = Texture.from(`./game/asteroid-${data.full.variation}.svg`);
+            this.image.texture = Texture.from(`asteroid-${data.full.variation}.svg`);
             this.image.width = this.image.height = Camera.unitToScreen(data.full.radius * 2);
         }
     }

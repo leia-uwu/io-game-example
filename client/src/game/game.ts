@@ -13,7 +13,6 @@ import { Projectile } from "./entities/projectile";
 import { type App } from "../main";
 import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { GameUi } from "./gameUi";
-import { GameConstants } from "../../../common/src/constants";
 import { Asteroid } from "./entities/asteroid";
 import { ParticleManager } from "./particle";
 
@@ -49,7 +48,8 @@ export class Game {
         this.ui.setupUi();
     }
 
-    init(): void {
+    async init(): Promise<void> {
+        await this.loadAssets();
         this.pixi.ticker.add(this.render.bind(this));
         this.pixi.renderer.on("resize", this.resize.bind(this));
         this.pixi.stage.addChild(this.camera.container);
@@ -57,14 +57,27 @@ export class Game {
     }
 
     async loadAssets(): Promise<void> {
-        await Assets.load("./game/player.svg");
-        await Assets.load("./game/projectile.svg");
+        // imports all svg assets from public dir
+        // and sets an alias with the file name
+        // so for example you can just do:
+        // new Sprite("player.svg")
+        // instead of:
+        // new Sprite("/img/player.svg")
 
-        for (let i = 0; i < GameConstants.asteroids.variations; i++) {
-            await Assets.load(`./game/asteroid-${i}.svg`);
+        const promises: Array<ReturnType<typeof Assets["load"]>> = [];
+        const imgs = import.meta.glob("../../public/img/*.svg")
+
+        for (const file in imgs) {
+            const path = file.split("/");
+            const name = path[path.length - 1];
+
+            promises.push(Assets.load({
+                alias: name,
+                src: file.replace("/public", "")
+            }));
         }
 
-        await Assets.load("./game/particle.svg");
+        await Promise.all(promises);
     }
 
     connect(address: string): void {

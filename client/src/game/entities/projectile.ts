@@ -7,10 +7,10 @@ import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
 import { GameConstants } from "../../../../common/src/constants";
 
-export class Projectile extends ClientEntity<EntityType.Projectile> {
+export class Projectile extends ClientEntity {
     readonly type = EntityType.Projectile;
 
-    trail = Sprite.from("./game/projectile.svg");
+    trail = Sprite.from("projectile.svg");
 
     direction = Vec2.new(0, 0);
 

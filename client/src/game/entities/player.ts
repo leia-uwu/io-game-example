@@ -9,10 +9,10 @@ import { GameConstants } from "../../../../common/src/constants";
 import { EasinFunctions, MathUtils } from "../../../../common/src/utils/math";
 import { Random } from "../../../../common/src/utils/random";
 
-export class Player extends ClientEntity<EntityType.Player> {
+export class Player extends ClientEntity {
     readonly type = EntityType.Player;
 
-    image = Sprite.from("./game/player.svg");
+    image = Sprite.from("player.svg");
 
     // container for stuff that doesn't rotate
     staticContainer = new Container();
@@ -98,7 +98,7 @@ export class Player extends ClientEntity<EntityType.Player> {
                 lifeTime: { min: 0.5, max: 2 },
                 blendMode: "add",
                 tint: new Color(`hsl(${Random.int(0, 360)}, 100%, 50%)`),
-                sprite: "./game/particle.svg",
+                sprite: "particle.svg",
                 rotation: { value: 0 },
                 alpha: { start: 1, end: 0, easing: EasinFunctions.sineIn },
                 scale: { start: 2, end: 0 },
