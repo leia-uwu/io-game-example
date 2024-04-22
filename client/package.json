@@ -7,11 +7,11 @@
         "preview": "vite preview"
     },
     "devDependencies": {
-        "sass": "^1.72.0",
-        "typescript": "^5.4.3",
+        "sass": "^1.75.0",
+        "typescript": "^5.4.5",
         "vite": "^4.5.3"
     },
     "dependencies": {
-        "pixi.js": "^8.0.4"
+        "pixi.js": "^8.1.0"
     }
 }
