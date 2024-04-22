@@ -21,12 +21,7 @@ export interface HitboxJSONMapping {
 
 export type HitboxJSON = HitboxJSONMapping[HitboxType];
 
-export interface HitboxMapping {
-    [HitboxType.Circle]: CircleHitbox
-    [HitboxType.Rect]: RectHitbox
-}
-
-export type Hitbox = HitboxMapping[HitboxType];
+export type Hitbox = CircleHitbox | RectHitbox;
 
 export abstract class BaseHitbox {
     abstract type: HitboxType;

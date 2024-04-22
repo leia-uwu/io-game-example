@@ -15,7 +15,7 @@ import { Projectile } from "./projectile";
 import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { Asteroid } from "./asteroid";
 
-export class Player extends ServerEntity<EntityType.Player> {
+export class Player extends ServerEntity {
     readonly type = EntityType.Player;
     socket: WebSocket<PlayerData>;
     name = "";

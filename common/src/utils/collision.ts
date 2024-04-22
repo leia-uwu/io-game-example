@@ -194,7 +194,7 @@ export const Collision = {
         if (distSqr < r * r) {
             const dist = Math.sqrt(distSqr);
             return {
-                dir: dist > 0.00001 ? Vec2.div(toP1, dist) : Vec2.new(1, 0),
+                dir: dist > 0.00001 ? Vec2.div(toP1, dist) : Vec2.new(1.0, 0.0),
                 pen: r - dist
             };
         }
@@ -218,25 +218,28 @@ export const Collision = {
             const yp = Math.abs(p.y) - e.y - radius;
             if (xp > yp) {
                 return {
-                    dir: Vec2.new(p.x > 0 ? 1 : -1, 0),
+                    dir: Vec2.new(p.x > 0.0 ? 1.0 : -1.0, 0.0),
                     pen: -xp
                 };
             }
             return {
-                dir: Vec2.new(0, p.y > 0 ? 1 : -1),
+                dir: Vec2.new(0.0, p.y > 0.0 ? 1.0 : -1.0),
                 pen: -yp
             };
         }
-        const cpt = Vec2.new(MathUtils.clamp(pos.x, min.x, max.x), MathUtils.clamp(pos.y, min.y, max.y));
+        const cpt = Vec2.new(
+            MathUtils.clamp(pos.x, min.x, max.x),
+            MathUtils.clamp(pos.y, min.y, max.y)
+        );
         let dir = Vec2.sub(pos, cpt);
 
-        dir = Vec2.sub(cpt, pos);
+        dir = Vec2.sub(pos, cpt);
 
         const dstSqr = Vec2.lengthSqr(dir);
         if (dstSqr < radius * radius) {
             const dst = Math.sqrt(dstSqr);
             return {
-                dir: dst > 0.0001 ? Vec2.div(dir, dst) : Vec2.new(1, 0),
+                dir: dst > 0.0001 ? Vec2.div(dir, dst) : Vec2.new(1.0, 0.0),
                 pen: radius - dst
             };
         }
@@ -252,24 +255,24 @@ export const Collision = {
     * @param max2 The max vector of the second rectangle
     * @return An intersection response with the intersection direction and pen, returns null if they don't intersect
     */
-    rectRectIntersection(min: Vector, max: Vector, min2: Vector, max2: Vector): CollisionResponse {
-        const e0 = Vec2.mul(Vec2.sub(max, min), 0.5);
-        const c0 = Vec2.add(min, e0);
-        const e1 = Vec2.mul(Vec2.sub(max2, min2), 0.5);
-        const c1 = Vec2.add(min2, e1);
+    rectRectIntersection(min0: Vector, max0: Vector, min1: Vector, max1: Vector): CollisionResponse {
+        const e0 = Vec2.mul(Vec2.sub(max0, min0), 0.5);
+        const c0 = Vec2.add(min0, e0);
+        const e1 = Vec2.mul(Vec2.sub(max1, min1), 0.5);
+        const c1 = Vec2.add(min1, e1);
         const n = Vec2.sub(c1, c0);
         const xo = e0.x + e1.x - Math.abs(n.x);
-        if (xo > 0) {
+        if (xo > 0.0) {
             const yo = e0.y + e1.y - Math.abs(n.y);
-            if (yo > 0) {
+            if (yo > 0.0) {
                 if (xo > yo) {
                     return {
-                        dir: n.x < 0 ? Vec2.new(-1, 0) : Vec2.new(1, 0),
+                        dir: n.x < 0.0 ? Vec2.new(-1.0, 0.0) : Vec2.new(1.0, 0.0),
                         pen: xo
                     };
                 }
                 return {
-                    dir: n.y < 0 ? Vec2.new(0, -1) : Vec2.new(0, 1),
+                    dir: n.y < 0.0 ? Vec2.new(0.0, -1.0) : Vec2.new(0.0, 1.0),
                     pen: yo
                 };
             }
