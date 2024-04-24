@@ -81,6 +81,7 @@ export class Grid {
     remove(entity: ServerEntity): void {
         this.entities.delete(entity.id);
         this.removeFromGrid(entity);
+        entity.game.idAllocator.give(entity.id);
         (this.byCategory[entity.type] as Set<typeof entity>).delete(entity);
     }
 

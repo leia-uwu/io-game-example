@@ -11,6 +11,7 @@ import { EntityType } from "../../common/src/net";
 import { Asteroid } from "./entities/asteroid";
 import { Random } from "../../common/src/utils/random";
 import { type Explosion } from "../../common/src/packets/updatePacket";
+import { IDAllocator } from "./idAllocator";
 
 export class Game {
     players = new EntityPool<Player>();
@@ -29,15 +30,10 @@ export class Game {
     height = 128;
     mapDirty = false;
 
-    // TODO: id allocator
-    private _currentId = 1;
+    idAllocator = new IDAllocator(16);
 
     dt = 0;
     now = Date.now();
-
-    nextId(): number {
-        return this._currentId++;
-    }
 
     timer = new NanoTimer();
 

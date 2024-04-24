@@ -20,7 +20,7 @@ export abstract class ServerEntity<T extends EntityType = EntityType> {
 
     constructor(game: Game, pos: Vector) {
         this.game = game;
-        this.id = game.nextId();
+        this.id = game.idAllocator.getNextId();
         this._position = pos;
     }
 
