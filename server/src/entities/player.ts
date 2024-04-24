@@ -176,6 +176,12 @@ export class Player extends ServerEntity {
         updatePacket.newPlayers = this.firstPacket ? [...this.game.players] : this.game.newPlayers;
         updatePacket.deletedPlayers = this.game.deletedPlayers;
 
+        for (const explosion of this.game.explosions) {
+            if (rect.isPointInside(explosion.position)) {
+                updatePacket.explosions.push(explosion);
+            }
+        }
+
         updatePacket.map.width = this.game.width;
         updatePacket.map.height = this.game.height;
         updatePacket.mapDirty = this.firstPacket ?? this.game.mapDirty;

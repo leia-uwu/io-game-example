@@ -92,7 +92,7 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         },
         serializeFull(stream, data) {
             stream.writeUint8(data.variation);
-            stream.writeFloat(data.radius, GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius, 8);
+            stream.writeFloat(data.radius, GameConstants.asteroid.minRadius, GameConstants.asteroid.maxRadius, 8);
         },
         deserializePartial(stream) {
             return {
@@ -102,7 +102,7 @@ export const EntitySerializations: { [K in EntityType]: EntitySerialization<K> }
         deserializeFull(stream) {
             return {
                 variation: stream.readUint8(),
-                radius: stream.readFloat(GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius, 8)
+                radius: stream.readFloat(GameConstants.asteroid.minRadius, GameConstants.asteroid.maxRadius, 8)
             };
         }
     }
@@ -114,6 +114,11 @@ interface Entity {
     data: EntitiesNetData[Entity["type"]]
 }
 
+export interface Explosion {
+    position: Vector
+    radius: number
+}
+
 enum UpdateFlags {
     DeletedEntities = 1 << 0,
     FullEntities = 1 << 1,
@@ -121,7 +126,8 @@ enum UpdateFlags {
     NewPlayers = 1 << 3,
     DeletedPlayers = 1 << 4,
     PlayerData = 1 << 5,
-    Map = 1 << 6
+    Explosions = 1 << 6,
+    Map = 1 << 7
 }
 
 export class UpdatePacket extends Packet {
@@ -145,6 +151,8 @@ export class UpdatePacket extends Packet {
         id: 0,
         zoom: 0
     };
+
+    explosions: Explosion[] = [];
 
     mapDirty = false;
     map = {
@@ -223,6 +231,20 @@ export class UpdatePacket extends Packet {
             stream.writeAlignToNextByte();
 
             flags |= UpdateFlags.PlayerData;
+        }
+
+        if (this.explosions.length) {
+            stream.writeArray(this.explosions, 8, (explosion) => {
+                stream.writePosition(explosion.position);
+                stream.writeFloat(
+                    explosion.radius,
+                    GameConstants.explosion.minRadius,
+                    GameConstants.explosion.maxRadius,
+                    8
+                );
+            });
+
+            flags |= UpdateFlags.Explosions;
         }
 
         if (this.mapDirty) {
@@ -305,6 +327,15 @@ export class UpdatePacket extends Packet {
             }
 
             stream.readAlignToNextByte();
+        }
+
+        if (flags & UpdateFlags.Explosions) {
+            stream.readArray(this.explosions, 8, () => {
+                return {
+                    position: stream.readPosition(),
+                    radius: stream.readFloat(GameConstants.explosion.minRadius, GameConstants.explosion.maxRadius, 8)
+                };
+            });
         }
 
         if (flags & UpdateFlags.Map) {

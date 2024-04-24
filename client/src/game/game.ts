@@ -1,5 +1,5 @@
 import { GameBitStream, EntityType, type Packet, PacketStream } from "../../../common/src/net";
-import { type Application, Assets, Graphics } from "pixi.js";
+import { type Application, Assets, Graphics, Color } from "pixi.js";
 import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { EntityPool } from "../../../common/src/utils/entityPool";
@@ -15,6 +15,8 @@ import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { GameUi } from "./gameUi";
 import { Asteroid } from "./entities/asteroid";
 import { ParticleManager } from "./particle";
+import { Random } from "../../../common/src/utils/random";
+import { EasinFunctions } from "../../../common/src/utils/math";
 
 export class Game {
     app: App;
@@ -65,7 +67,7 @@ export class Game {
         // new Sprite("/img/player.svg")
 
         const promises: Array<ReturnType<typeof Assets["load"]>> = [];
-        const imgs = import.meta.glob("../../public/img/*.svg")
+        const imgs = import.meta.glob("../../public/img/*.svg");
 
         for (const file in imgs) {
             const path = file.split("/");
@@ -206,6 +208,23 @@ export class Game {
                 continue;
             }
             entity.updateFromData(entityPartialData.data, false);
+        }
+
+        for (const explosion of packet.explosions) {
+            this.particleManager.spawnParticles(explosion.radius * 10, () => {
+                return {
+                    position: explosion.position,
+                    lifeTime: { min: 0.5, max: 1.5 },
+                    blendMode: "add",
+                    tint: new Color(`hsl(${Random.int(0, 25)}, 100%, 50%)`),
+                    sprite: "particle.svg",
+                    rotation: { value: 0 },
+                    alpha: { start: 1, end: 0, easing: EasinFunctions.sineIn },
+                    scale: { start: 2, end: 0 },
+                    speed: { min: 5, max: 10 },
+                    direction: { value: Random.float(-Math.PI, Math.PI) }
+                };
+            });
         }
 
         if (packet.mapDirty) {

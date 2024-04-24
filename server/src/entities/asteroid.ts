@@ -12,7 +12,7 @@ export class Asteroid extends ServerEntity {
     readonly type = EntityType.Asteroid;
     hitbox: CircleHitbox;
 
-    variation = Random.int(0, GameConstants.asteroids.variations - 1);
+    variation = Random.int(0, GameConstants.asteroid.variations - 1);
 
     health: number;
 
@@ -29,7 +29,7 @@ export class Asteroid extends ServerEntity {
         super(game, position);
         this.hitbox = new CircleHitbox(radius, position);
 
-        const def = GameConstants.asteroids;
+        const def = GameConstants.asteroid;
         this.health = MathUtils.remap(radius, def.minRadius, def.maxRadius, def.minHealth, def.maxHealth);
     }
 
@@ -65,13 +65,17 @@ export class Asteroid extends ServerEntity {
     }
 
     kill(): void {
-        if (this.hitbox.radius > GameConstants.asteroids.splitMaxRadius) {
+        if (this.hitbox.radius > GameConstants.asteroid.splitMaxRadius) {
             const radius = this.hitbox.radius / 2;
             for (let i = 0; i < 2; i++) {
                 const asteroid = new Asteroid(this.game, this.position, radius);
                 this.game.grid.addEntity(asteroid);
             }
         }
+        this.game.explosions.push({
+            position: this.position,
+            radius: MathUtils.clamp(this.hitbox.radius, GameConstants.explosion.minRadius, GameConstants.explosion.maxRadius)
+        });
         this.game.grid.remove(this);
     }
 

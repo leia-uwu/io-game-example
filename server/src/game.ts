@@ -10,6 +10,7 @@ import { type ServerConfig } from "./config";
 import { EntityType } from "../../common/src/net";
 import { Asteroid } from "./entities/asteroid";
 import { Random } from "../../common/src/utils/random";
+import { type Explosion } from "../../common/src/packets/updatePacket";
 
 export class Game {
     players = new EntityPool<Player>();
@@ -19,6 +20,8 @@ export class Game {
 
     partialDirtyEntities = new Set<ServerEntity>();
     fullDirtyEntities = new Set<ServerEntity>();
+
+    explosions: Explosion[] = [];
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
@@ -71,7 +74,7 @@ export class Game {
                 0, this.width,
                 0, this.height
             ),
-            Random.float(GameConstants.asteroids.minRadius, GameConstants.asteroids.maxRadius)
+            Random.float(GameConstants.asteroid.minRadius, GameConstants.asteroid.maxRadius)
             );
             this.grid.addEntity(asteroid);
         }
@@ -105,6 +108,7 @@ export class Game {
         this.fullDirtyEntities.clear();
         this.newPlayers.length = 0;
         this.deletedPlayers.length = 0;
+        this.explosions.length = 0;
         this.mapDirty = false;
     }
 }
