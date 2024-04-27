@@ -91,7 +91,7 @@ export class Game {
 
         this.socket.binaryType = "arraybuffer";
 
-        this.socket.onmessage = (msg) => {
+        this.socket.onmessage = msg => {
             this.onMessage(msg.data);
         };
 
@@ -106,7 +106,7 @@ export class Game {
             this.endGame();
         };
 
-        this.socket.onerror = (error) => {
+        this.socket.onerror = error => {
             console.error(error);
             this.endGame();
         };

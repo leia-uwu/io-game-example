@@ -58,8 +58,8 @@ export class Projectile extends ServerEntity {
             }
         }
 
-        if (this.position.x <= 0 || this.position.x >= this.game.width ||
-            this.position.y <= 0 || this.position.y >= this.game.height) {
+        if (this.position.x <= 0 || this.position.x >= this.game.width
+            || this.position.y <= 0 || this.position.y >= this.game.height) {
             this.dead = true;
         }
         this.position.x = MathUtils.clamp(this.position.x, 0, this.game.width);

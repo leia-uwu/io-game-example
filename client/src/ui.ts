@@ -60,7 +60,7 @@ export class UiManager {
             option.value = serverId;
             option.innerText = server.name;
 
-            fetch(`http${server.https ? "s" : ""}://${server.address}/server_info`).then(async(res) => {
+            fetch(`http${server.https ? "s" : ""}://${server.address}/server_info`).then(async res => {
                 const data = await res.json();
                 option.innerText = `${server.name} - ${data.playerCount} Players`;
             }).catch(err => {

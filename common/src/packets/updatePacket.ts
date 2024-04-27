@@ -180,7 +180,7 @@ export class UpdatePacket extends Packet {
         stream.writeUint16(flags);
 
         if (this.deletedEntities.length) {
-            stream.writeArray(this.deletedEntities, 16, (id) => {
+            stream.writeArray(this.deletedEntities, 16, id => {
                 stream.writeUint16(id);
             });
 
@@ -188,7 +188,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.serverFullEntities.length) {
-            stream.writeArray(this.serverFullEntities, 16, (entity) => {
+            stream.writeArray(this.serverFullEntities, 16, entity => {
                 stream.writeBytes(entity.partialStream, 0, entity.partialStream.byteIndex);
                 stream.writeBytes(entity.fullStream, 0, entity.fullStream.byteIndex);
             });
@@ -197,7 +197,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.serverPartialEntities.length) {
-            stream.writeArray(this.serverPartialEntities, 16, (entity) => {
+            stream.writeArray(this.serverPartialEntities, 16, entity => {
                 stream.writeBytes(entity.partialStream, 0, entity.partialStream.byteIndex);
             });
 
@@ -205,7 +205,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.newPlayers.length) {
-            stream.writeArray(this.newPlayers, 8, (player) => {
+            stream.writeArray(this.newPlayers, 8, player => {
                 stream.writeUint16(player.id);
                 stream.writeASCIIString(player.name, GameConstants.player.nameMaxLength);
             });
@@ -214,7 +214,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.deletedPlayers.length) {
-            stream.writeArray(this.deletedPlayers, 8, (id) => {
+            stream.writeArray(this.deletedPlayers, 8, id => {
                 stream.writeUint16(id);
             });
 
@@ -237,7 +237,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.explosions.length) {
-            stream.writeArray(this.explosions, 8, (explosion) => {
+            stream.writeArray(this.explosions, 8, explosion => {
                 stream.writePosition(explosion.position);
                 stream.writeFloat(
                     explosion.radius,
@@ -251,7 +251,7 @@ export class UpdatePacket extends Packet {
         }
 
         if (this.shots.length) {
-            stream.writeArray(this.shots, 8, (pos) => {
+            stream.writeArray(this.shots, 8, pos => {
                 stream.writePosition(pos);
             });
 

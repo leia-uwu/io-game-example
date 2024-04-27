@@ -3,7 +3,7 @@ import { Vec2, type Vector } from "./vector";
 
 export enum HitboxType {
     Circle,
-    Rect,
+    Rect
 }
 
 export interface HitboxJSONMapping {

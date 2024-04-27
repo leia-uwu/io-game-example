@@ -138,7 +138,7 @@ export class Player extends ServerEntity {
             this.game.explosions.push({
                 position: this.position,
                 radius: 25
-            })
+            });
         }
     }
 
@@ -164,17 +164,17 @@ export class Player extends ServerEntity {
         }
 
         for (const entity of this.game.fullDirtyEntities) {
-            if (newVisibleEntities.has(entity) &&
-                !updatePacket.serverFullEntities.includes(entity) &&
-                !updatePacket.deletedEntities.includes(entity.id)) {
+            if (newVisibleEntities.has(entity)
+                && !updatePacket.serverFullEntities.includes(entity)
+                && !updatePacket.deletedEntities.includes(entity.id)) {
                 updatePacket.serverFullEntities.push(entity);
             }
         }
 
         for (const entity of this.game.partialDirtyEntities) {
-            if (newVisibleEntities.has(entity) &&
-                !updatePacket.serverFullEntities.includes(entity) &&
-                !updatePacket.deletedEntities.includes(entity.id)) {
+            if (newVisibleEntities.has(entity)
+                && !updatePacket.serverFullEntities.includes(entity)
+                && !updatePacket.deletedEntities.includes(entity.id)) {
                 updatePacket.serverPartialEntities.push(entity);
             }
         }

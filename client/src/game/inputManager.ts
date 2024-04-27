@@ -36,7 +36,7 @@ export class InputManager {
         window.addEventListener("pointerup", this.handleInputEvent.bind(this, false));
         window.addEventListener("wheel", this.handleInputEvent.bind(this, true));
 
-        window.addEventListener("mousemove", (e) => {
+        window.addEventListener("mousemove", e => {
             const rotation = Math.atan2(window.innerHeight / 2 - e.clientY, window.innerWidth / 2 - e.clientX) - Math.PI / 2;
 
             this.mouseDir = Vec2.new(
@@ -62,9 +62,9 @@ export class InputManager {
                 .forEach(modifier => (event[modifier] && modifierCount++));
 
             // As stated before, more than one modifier or a modifier alongside another key should invalidate an input
-            if ((modifierCount > 1 ||
-                (modifierCount === 1 && !["Shift", "Control", "Alt", "Meta"].includes(event.key))) &&
-                down
+            if ((modifierCount > 1
+                || (modifierCount === 1 && !["Shift", "Control", "Alt", "Meta"].includes(event.key)))
+                && down
                 // …but it only invalidates pressing a key, not releasing it
             ) return;
         }

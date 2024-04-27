@@ -36,7 +36,7 @@ function cors(res: HttpResponse): void {
         .writeHeader("Access-Control-Max-Age", "3600");
 }
 
-app.get("/server_info", (res) => {
+app.get("/server_info", res => {
     cors(res);
     const response = {
         playerCount: game.players.size

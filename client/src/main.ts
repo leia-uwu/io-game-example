@@ -21,7 +21,7 @@ export class App {
             preference: "webgl",
             background: 0x000000
         });
-        this.pixi.canvas.addEventListener("contextmenu", (e) => {
+        this.pixi.canvas.addEventListener("contextmenu", e => {
             e.preventDefault();
         });
 
