@@ -12,6 +12,7 @@ import { Asteroid } from "./entities/asteroid";
 import { Random } from "../../common/src/utils/random";
 import { type Explosion } from "../../common/src/packets/updatePacket";
 import { IDAllocator } from "./idAllocator";
+import { type Vector } from "../../common/src/utils/vector";
 
 export class Game {
     players = new EntityPool<Player>();
@@ -23,6 +24,7 @@ export class Game {
     fullDirtyEntities = new Set<ServerEntity>();
 
     explosions: Explosion[] = [];
+    shots: Vector[] = [];
 
     grid = new Grid(GameConstants.maxPosition, GameConstants.maxPosition);
 
@@ -105,6 +107,7 @@ export class Game {
         this.newPlayers.length = 0;
         this.deletedPlayers.length = 0;
         this.explosions.length = 0;
+        this.shots.length = 0;
         this.mapDirty = false;
     }
 }

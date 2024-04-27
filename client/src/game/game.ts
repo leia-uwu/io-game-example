@@ -17,6 +17,7 @@ import { ParticleManager } from "./particle";
 import { Random } from "../../../common/src/utils/random";
 import { EasinFunctions } from "../../../common/src/utils/math";
 import { type ClassDefKey } from "../../../common/src/defs/classDefs";
+import { AudioManager } from "./audioManager";
 
 export class Game {
     app: App;
@@ -38,6 +39,7 @@ export class Game {
 
     camera = new Camera(this);
     inputManager = new InputManager(this);
+    audioManager = new AudioManager(this);
     particleManager = new ParticleManager(this);
 
     mapGraphics = new Graphics({
@@ -67,7 +69,7 @@ export class Game {
         // new Sprite("/img/player.svg")
 
         const promises: Array<ReturnType<typeof Assets["load"]>> = [];
-        const imgs = import.meta.glob("../../public/img/*.svg");
+        const imgs = import.meta.glob("/public/img/**/*.svg");
 
         for (const file in imgs) {
             const path = file.split("/");
@@ -228,6 +230,13 @@ export class Game {
             });
         }
 
+        for (const shot of packet.shots) {
+            this.audioManager.play("shot_01.mp3", {
+                position: shot,
+                maxRange: 96
+            });
+        }
+
         if (packet.mapDirty) {
             const ctx = this.mapGraphics;
             ctx.clear();
@@ -282,6 +291,7 @@ export class Game {
         if (this.activePlayer) {
             this.camera.position = this.activePlayer.container.position;
         }
+        this.audioManager.update();
         this.camera.render();
 
         const inputPacket = new InputPacket();

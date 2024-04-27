@@ -127,7 +127,8 @@ enum UpdateFlags {
     DeletedPlayers = 1 << 4,
     PlayerData = 1 << 5,
     Explosions = 1 << 6,
-    Map = 1 << 7
+    Shots = 1 << 7,
+    Map = 1 << 8
 }
 
 export class UpdatePacket extends Packet {
@@ -154,6 +155,8 @@ export class UpdatePacket extends Packet {
 
     explosions: Explosion[] = [];
 
+    shots: Vector[] = [];
+
     mapDirty = false;
     map = {
         width: 0,
@@ -174,7 +177,7 @@ export class UpdatePacket extends Packet {
         let flags = 0;
         // save the stream index for writing flags
         const flagsIdx = stream.index;
-        stream.writeUint8(flags);
+        stream.writeUint16(flags);
 
         if (this.deletedEntities.length) {
             stream.writeArray(this.deletedEntities, 16, (id) => {
@@ -247,6 +250,14 @@ export class UpdatePacket extends Packet {
             flags |= UpdateFlags.Explosions;
         }
 
+        if (this.shots.length) {
+            stream.writeArray(this.shots, 8, (pos) => {
+                stream.writePosition(pos);
+            });
+
+            flags |= UpdateFlags.Shots;
+        }
+
         if (this.mapDirty) {
             stream.writeUint16(this.map.width);
             stream.writeUint16(this.map.height);
@@ -257,12 +268,12 @@ export class UpdatePacket extends Packet {
         // write flags and restore stream index
         const idx = stream.index;
         stream.index = flagsIdx;
-        stream.writeUint8(flags);
+        stream.writeUint16(flags);
         stream.index = idx;
     }
 
     override deserialize(stream: GameBitStream): void {
-        const flags = stream.readUint8();
+        const flags = stream.readUint16();
 
         if (flags & UpdateFlags.DeletedEntities) {
             stream.readArray(this.deletedEntities, 16, () => {
@@ -335,6 +346,12 @@ export class UpdatePacket extends Packet {
                     position: stream.readPosition(),
                     radius: stream.readFloat(GameConstants.explosion.minRadius, GameConstants.explosion.maxRadius, 8)
                 };
+            });
+        }
+
+        if (flags & UpdateFlags.Shots) {
+            stream.readArray(this.shots, 8, () => {
+                return stream.readPosition();
             });
         }
 

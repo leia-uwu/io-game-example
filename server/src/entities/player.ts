@@ -97,6 +97,7 @@ export class Player extends ServerEntity {
             this.shotCooldown = this.game.now + classDef.fireDelay;
             const projectile = new Projectile(this.game, this.position, this.direction, this);
             this.game.grid.addEntity(projectile);
+            this.game.shots.push(this.position);
         }
 
         const entities = this.game.grid.intersectsHitbox(this.hitbox);
@@ -184,6 +185,11 @@ export class Player extends ServerEntity {
                 updatePacket.explosions.push(explosion);
             }
         }
+        for (const shoot of this.game.shots) {
+            if (rect.isPointInside(shoot)) {
+                updatePacket.shots.push(shoot);
+            }
+        }
 
         updatePacket.map.width = this.game.width;
         updatePacket.map.height = this.game.height;
@@ -245,6 +251,8 @@ export class Player extends ServerEntity {
         const selectedClass = packet.class;
         if (selectedClass && ClassDefs.typeToId(selectedClass)) {
             this.class = selectedClass;
+            const def = ClassDefs.typeToDef(selectedClass);
+            this.zoom = def.cameraZoom;
         }
 
         this.socket.getUserData().joined = true;
