@@ -8,12 +8,9 @@ export const GameConstants = {
         enemyTint: 0xff3838,
         speed: 25,
         maxHealth: 100,
-        defaultHealth: 100,
-        fireDelay: 250
+        defaultHealth: 100
     },
     projectile: {
-        damage: 15,
-        speed: 80,
         radius: 0.8,
         trailMaxLength: 25
     },

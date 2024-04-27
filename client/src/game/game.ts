@@ -1,6 +1,5 @@
 import { GameBitStream, EntityType, type Packet, PacketStream } from "../../../common/src/net";
 import { type Application, Assets, Graphics, Color } from "pixi.js";
-import { getElem } from "../utils";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { EntityPool } from "../../../common/src/utils/entityPool";
 import { type ClientEntity } from "./entities/entity";
@@ -17,6 +16,7 @@ import { Asteroid } from "./entities/asteroid";
 import { ParticleManager } from "./particle";
 import { Random } from "../../../common/src/utils/random";
 import { EasinFunctions } from "../../../common/src/utils/math";
+import { type ClassDefKey } from "../../../common/src/defs/classDefs";
 
 export class Game {
     app: App;
@@ -95,7 +95,8 @@ export class Game {
 
         this.socket.onopen = () => {
             const joinPacket = new JoinPacket();
-            joinPacket.name = (getElem<HTMLInputElement>("#name-input")).value;
+            joinPacket.name = this.app.uiManager.nameInput.value;
+            joinPacket.class = this.app.uiManager.classSelect.value as ClassDefKey;
             this.sendPacket(joinPacket);
         };
 

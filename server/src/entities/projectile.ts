@@ -1,4 +1,5 @@
 import { GameConstants } from "../../../common/src/constants";
+import { ClassDefs } from "../../../common/src/defs/classDefs";
 import { EntityType } from "../../../common/src/net";
 import { type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox } from "../../../common/src/utils/hitbox";
@@ -39,7 +40,9 @@ export class Projectile extends ServerEntity {
             return;
         }
 
-        const speed = Vec2.mul(this.direction, GameConstants.projectile.speed);
+        const classDef = ClassDefs.typeToDef(this.source.class);
+
+        const speed = Vec2.mul(this.direction, classDef.bulletSpeed);
         this.position = Vec2.add(this.position, Vec2.mul(speed, this.game.dt));
         this.game.grid.updateEntity(this);
         this.setDirty();
@@ -50,7 +53,7 @@ export class Projectile extends ServerEntity {
             if (entity === this.source) continue;
 
             if (entity.hitbox.collidesWith(this.hitbox)) {
-                entity.damage(GameConstants.projectile.damage, this.source);
+                entity.damage(classDef.damage, this.source);
                 this.dead = true;
             }
         }

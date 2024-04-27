@@ -14,11 +14,13 @@ import { GameConstants } from "../../../common/src/constants";
 import { Projectile } from "./projectile";
 import { GameOverPacket } from "../../../common/src/packets/gameOverPacket";
 import { Asteroid } from "./asteroid";
+import { type ClassDefKey, ClassDefs } from "../../../common/src/defs/classDefs";
 
 export class Player extends ServerEntity {
     readonly type = EntityType.Player;
     socket: WebSocket<PlayerData>;
     name = "";
+    class: ClassDefKey = "main";
     direction = Vec2.new(0, 0);
     mouseDown = false;
     shoot = false;
@@ -90,8 +92,9 @@ export class Player extends ServerEntity {
             this.position = Vec2.add(this.position, Vec2.mul(speed, this.game.dt));
         }
 
+        const classDef = ClassDefs.typeToDef(this.class);
         if (this.shoot && this.shotCooldown < this.game.now) {
-            this.shotCooldown = this.game.now + GameConstants.player.fireDelay;
+            this.shotCooldown = this.game.now + classDef.fireDelay;
             const projectile = new Projectile(this.game, this.position, this.direction, this);
             this.game.grid.addEntity(projectile);
         }
@@ -238,6 +241,12 @@ export class Player extends ServerEntity {
     join(packet: JoinPacket): void {
         this.name = packet.name.trim();
         if (!this.name) this.name = GameConstants.player.defaultName;
+
+        const selectedClass = packet.class;
+        if (selectedClass && ClassDefs.typeToId(selectedClass)) {
+            this.class = selectedClass;
+        }
+
         this.socket.getUserData().joined = true;
         this.game.players.add(this);
         this.game.grid.addEntity(this);
