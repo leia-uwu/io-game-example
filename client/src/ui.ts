@@ -1,6 +1,6 @@
 import { GameConstants } from "../../common/src/constants";
-import { ClassDefs } from "../../common/src/defs/classDefs";
-import { Config } from "./config";
+import { type ClassDefKey, ClassDefs } from "../../common/src/defs/classDefs";
+import { ClientConfig } from "./config";
 import { type App } from "./main";
 import { getElem } from "./utils";
 
@@ -24,11 +24,16 @@ export class UiManager {
         this.playButton.disabled = true;
         this.playButton.addEventListener("click", () => {
             if (this.playButton.disabled) return;
-            const server = Config.servers[this.serverSelect.value];
+            const server = ClientConfig.servers[this.serverSelect.value];
             this.app.game.connect(`ws${server.https ? "s" : ""}://${server.address}/play`);
         });
 
         this.loadServerInfo();
+
+        this.serverSelect.value = this.app.settings.get("server");
+        this.serverSelect.addEventListener("change", () => {
+            this.app.settings.set("server", this.serverSelect.value);
+        });
 
         for (const defId of ClassDefs) {
             const option = document.createElement("option");
@@ -36,6 +41,10 @@ export class UiManager {
             option.innerText = defId.charAt(0).toUpperCase() + defId.slice(1);
             this.classSelect.appendChild(option);
         }
+        this.classSelect.value = this.app.settings.get("playerClass");
+        this.classSelect.addEventListener("change", () => {
+            this.app.settings.set("playerClass", this.classSelect.value as ClassDefKey);
+        });
     }
 
     /**
@@ -44,8 +53,8 @@ export class UiManager {
     loadServerInfo(): void {
         this.serverSelect.innerHTML = "";
 
-        for (const serverId in Config.servers) {
-            const server = Config.servers[serverId];
+        for (const serverId in ClientConfig.servers) {
+            const server = ClientConfig.servers[serverId];
             const option = document.createElement("option");
             this.serverSelect.appendChild(option);
             option.value = serverId;

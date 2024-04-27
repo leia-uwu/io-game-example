@@ -4,8 +4,10 @@ import { Game } from "./game/game";
 import { UiManager } from "./ui";
 import { Application } from "pixi.js";
 import { getElem } from "./utils";
+import { SettingsManager } from "./settings";
 
 export class App {
+    settings = new SettingsManager();
     uiManager = new UiManager(this);
     pixi = new Application();
     game = new Game(this);
