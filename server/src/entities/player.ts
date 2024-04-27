@@ -124,6 +124,7 @@ export class Player extends ServerEntity {
 
     damage(amount: number, source: Player) {
         this.health -= amount;
+
         if (this.health <= 0) {
             this.dead = true;
             this.game.grid.remove(this);
@@ -133,6 +134,11 @@ export class Player extends ServerEntity {
             const gameOverPacket = new GameOverPacket();
             gameOverPacket.kills = this.kills;
             this.sendPacket(gameOverPacket);
+
+            this.game.explosions.push({
+                position: this.position,
+                radius: 25
+            })
         }
     }
 
