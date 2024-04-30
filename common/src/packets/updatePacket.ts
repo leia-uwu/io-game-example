@@ -1,5 +1,5 @@
-import { GameConstants } from "../constants";
-import { type GameBitStream, EntityType, Packet, ServerToClientPackets } from "../net";
+import { EntityType, GameConstants } from "../constants";
+import { type GameBitStream, type Packet } from "../net";
 import { type Vector } from "../utils/vector";
 
 export interface EntitiesNetData {
@@ -131,7 +131,7 @@ enum UpdateFlags {
     Map = 1 << 8
 }
 
-export class UpdatePacket extends Packet {
+export class UpdatePacket implements Packet {
     deletedEntities: number[] = [];
     partialEntities: Entity[] = [];
     fullEntities: Array<Entity & { data: Required<EntitiesNetData[Entity["type"]]> }> = [];
@@ -173,7 +173,7 @@ export class UpdatePacket extends Packet {
         fullStream: GameBitStream
     }> = [];
 
-    override serialize(stream: GameBitStream): void {
+    serialize(stream: GameBitStream): void {
         let flags = 0;
         // save the stream index for writing flags
         const flagsIdx = stream.index;
@@ -272,7 +272,7 @@ export class UpdatePacket extends Packet {
         stream.index = idx;
     }
 
-    override deserialize(stream: GameBitStream): void {
+    deserialize(stream: GameBitStream): void {
         const flags = stream.readUint16();
 
         if (flags & UpdateFlags.DeletedEntities) {
@@ -362,5 +362,3 @@ export class UpdatePacket extends Packet {
         }
     }
 }
-
-ServerToClientPackets.register(UpdatePacket);

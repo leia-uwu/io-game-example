@@ -1,11 +1,10 @@
 import { Sprite } from "pixi.js";
 import { type Game } from "../game";
 import { ClientEntity } from "./entity";
-import { EntityType } from "../../../../common/src/net";
 import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
-import { GameConstants } from "../../../../common/src/constants";
+import { EntityType, GameConstants } from "../../../../common/src/constants";
 
 export class Projectile extends ClientEntity {
     readonly type = EntityType.Projectile;

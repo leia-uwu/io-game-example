@@ -1,4 +1,4 @@
-import { GameBitStream, EntityType, type Packet, PacketStream } from "../../../common/src/net";
+import { GameBitStream, type Packet, PacketStream } from "../../../common/src/net";
 import { type Application, Assets, Graphics, Color } from "pixi.js";
 import { UpdatePacket } from "../../../common/src/packets/updatePacket";
 import { EntityPool } from "../../../common/src/utils/entityPool";
@@ -18,6 +18,7 @@ import { Random } from "../../../common/src/utils/random";
 import { EasinFunctions } from "../../../common/src/utils/math";
 import { type ClassDefKey } from "../../../common/src/defs/classDefs";
 import { AudioManager } from "./audioManager";
+import { EntityType } from "../../../common/src/constants";
 
 export class Game {
     app: App;

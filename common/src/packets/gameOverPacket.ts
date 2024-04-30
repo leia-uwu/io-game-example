@@ -1,15 +1,13 @@
-import { type GameBitStream, Packet, ServerToClientPackets } from "../net";
+import { type GameBitStream, type Packet } from "../net";
 
-export class GameOverPacket extends Packet {
+export class GameOverPacket implements Packet {
     kills = 0;
 
-    override serialize(stream: GameBitStream): void {
+    serialize(stream: GameBitStream): void {
         stream.writeUint8(this.kills);
     }
 
-    override deserialize(stream: GameBitStream): void {
+    deserialize(stream: GameBitStream): void {
         this.kills = stream.readUint8();
     }
 }
-
-ServerToClientPackets.register(GameOverPacket);

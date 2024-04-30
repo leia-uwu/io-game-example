@@ -2,12 +2,10 @@ import { BitStream } from "bit-buffer";
 import { type Vector } from "./utils/vector";
 import { GameConstants } from "./constants";
 import { MathUtils } from "./utils/math";
-
-export enum EntityType {
-    Player,
-    Projectile,
-    Asteroid
-}
+import { JoinPacket } from "./packets/joinPacket";
+import { InputPacket } from "./packets/inputPacket";
+import { UpdatePacket } from "./packets/updatePacket";
+import { GameOverPacket } from "./packets/gameOverPacket";
 
 export class GameBitStream extends BitStream {
     static alloc(size: number): GameBitStream {
@@ -152,8 +150,8 @@ export class GameBitStream extends BitStream {
     /**
      * Write an array to the stream
      * @param arr An array containing the items to serialize
-     * @param serializeFn The function to serialize each iterator item
-     * @param size The iterator size (eg. array.length or set.size)
+     * @param bits The amount of bits to write for the array size
+     * @param serializeFn The function to serialize each array item
      */
     writeArray<T>(arr: T[], bits: number, serializeFn: (item: T) => void): void {
         if (bits < 0 || bits >= 31) {
@@ -162,10 +160,10 @@ export class GameBitStream extends BitStream {
 
         this.writeBits(arr.length, bits);
 
-        const max = 1 << bits;
+        const maxSize = 1 << bits;
         for (let i = 0; i < arr.length; i++) {
-            if (i > max) {
-                console.warn(`writeArray: iterator overflow: ${bits} bits, ${arr.length} size`);
+            if (i > maxSize) {
+                console.warn(`writeArray: array overflow: max length: ${maxSize}, length: ${arr.length}`);
                 break;
             }
             serializeFn(arr[i]);
@@ -175,8 +173,8 @@ export class GameBitStream extends BitStream {
     /**
      * Read an array from the stream
      * @param arr The array to add the deserialized elements;
-     * @param serializeFn The function to de-serialize each iterator item
-     * @param bits The maximum length of bits to read
+     * @param bits The amount of bits to read for the array size
+     * @param serializeFn The function to de-serialize each array item
      */
     readArray<T>(arr: T[], bits: number, deserializeFn: () => T): void {
         const size = this.readBits(bits);
@@ -194,9 +192,9 @@ export class GameBitStream extends BitStream {
     /**
      * Copy bytes from a source stream to this stream
      * !!!NOTE: Both streams index must be byte aligned
-     * @param {BitStream} src
-     * @param {number} offset
-     * @param {number} length
+     * @param src The source bit stream to copy
+     * @param offset The offset to start copying bytes
+     * @param length The amount of bytes to copy
      */
     writeBytes(src: GameBitStream, offset: number, length: number): void {
         if (this.index % 8 !== 0) {
@@ -225,34 +223,52 @@ export class GameBitStream extends BitStream {
     }
 }
 
-export abstract class Packet {
-    abstract serialize(stream: GameBitStream): void;
-    abstract deserialize(stream: GameBitStream): void;
+export interface Packet {
+    serialize(stream: GameBitStream): void
+    deserialize(stream: GameBitStream): void
 }
 
 class PacketRegister {
-    private _nextTypeId = 1;
+    private _nextTypeId = 0;
     readonly typeToId: Record<string, number> = {};
     readonly idToCtor: Array<new () => Packet> = [];
 
-    register(packet: typeof Packet & (new () => Packet)) {
-        const id = this._nextTypeId++;
-        this.typeToId[packet.name] = id;
-        this.idToCtor[id] = packet;
+    register(...packets: Array<(new () => Packet)>) {
+        for (const packet of packets) {
+            if (this.typeToId[packet.name]) {
+                console.warn(`Trying to register ${packet.name} multiple times`);
+                continue;
+            }
+            const id = this._nextTypeId++;
+            this.typeToId[packet.name] = id;
+            this.idToCtor[id] = packet;
+        }
     }
 }
 
-export const ClientToServerPackets = new PacketRegister();
-export const ServerToClientPackets = new PacketRegister();
+const ClientToServerPackets = new PacketRegister();
+ClientToServerPackets.register(
+    JoinPacket,
+    InputPacket
+);
+
+const ServerToClientPackets = new PacketRegister();
+ServerToClientPackets.register(
+    UpdatePacket,
+    GameOverPacket
+);
 
 export class PacketStream {
     stream: GameBitStream;
+    buffer: ArrayBuffer;
 
     constructor(source: GameBitStream | ArrayBuffer) {
         if (source instanceof ArrayBuffer) {
+            this.buffer = source;
             this.stream = new GameBitStream(source);
         } else {
             this.stream = source;
+            this.buffer = source.buffer;
         }
     }
 
@@ -274,11 +290,16 @@ export class PacketStream {
 
     private _deserliazePacket(register: PacketRegister): Packet | undefined {
         if (this.stream.length - this.stream.byteIndex * 8 >= 1) {
-            const id = this.stream.readUint8();
-            const packet = new register.idToCtor[id]();
-            packet.deserialize(this.stream);
-            this.stream.readAlignToNextByte();
-            return packet;
+            try {
+                const id = this.stream.readUint8();
+                const packet = new register.idToCtor[id]();
+                packet.deserialize(this.stream);
+                this.stream.readAlignToNextByte();
+                return packet;
+            } catch (e) {
+                console.error("Failed deserializing packet: ", e);
+                return undefined;
+            }
         }
         return undefined;
     }
@@ -286,7 +307,7 @@ export class PacketStream {
     private _serializePacket(packet: Packet, register: PacketRegister) {
         const type = register.typeToId[packet.constructor.name];
         if (type === undefined) {
-            throw new Error(`Unknown packet type: ${packet.constructor.name}, did you forget to register or import it?`);
+            throw new Error(`Unknown packet type: ${packet.constructor.name}, did you forget to register it?`);
         }
         this.stream.writeUint8(type);
         packet.serialize(this.stream);
@@ -294,6 +315,6 @@ export class PacketStream {
     }
 
     getBuffer(): ArrayBuffer {
-        return this.stream.buffer.slice(0, this.stream.byteIndex);
+        return this.buffer.slice(0, this.stream.byteIndex);
     }
 }

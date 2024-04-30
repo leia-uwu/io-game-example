@@ -1,4 +1,4 @@
-import { EntityType } from "../../common/src/net";
+import { EntityType } from "../../common/src/constants";
 import { type Hitbox, RectHitbox } from "../../common/src/utils/hitbox";
 import { MathUtils } from "../../common/src/utils/math";
 import { Vec2, type Vector } from "../../common/src/utils/vector";

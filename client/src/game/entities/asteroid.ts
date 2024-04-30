@@ -1,10 +1,10 @@
 import { Sprite, Texture } from "pixi.js";
 import { type Game } from "../game";
 import { ClientEntity } from "./entity";
-import { EntityType } from "../../../../common/src/net";
 import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { Camera } from "../camera";
+import { EntityType } from "../../../../common/src/constants";
 
 export class Asteroid extends ClientEntity {
     readonly type = EntityType.Asteroid;

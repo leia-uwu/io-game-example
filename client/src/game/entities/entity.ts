@@ -1,7 +1,7 @@
 import { Container } from "pixi.js";
-import { type EntityType } from "../../../../common/src/net";
 import { type EntitiesNetData } from "../../../../common/src/packets/updatePacket";
 import { MathUtils } from "../../../../common/src/utils/math";
+import { EntityType } from "../../../../common/src/constants";
 import { Vec2 } from "../../../../common/src/utils/vector";
 import { type Game } from "../game";
 

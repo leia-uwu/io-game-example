@@ -1,20 +1,18 @@
 import { GameConstants } from "../constants";
 import { type ClassDefKey, ClassDefs } from "../defs/classDefs";
-import { type GameBitStream, Packet, ClientToServerPackets } from "../net";
+import { type GameBitStream, type Packet } from "../net";
 
-export class JoinPacket extends Packet {
+export class JoinPacket implements Packet {
     name = "";
     class: ClassDefKey = "main";
 
-    override serialize(stream: GameBitStream): void {
+    serialize(stream: GameBitStream): void {
         stream.writeASCIIString(this.name, GameConstants.player.nameMaxLength);
         ClassDefs.write(stream, this.class);
     }
 
-    override deserialize(stream: GameBitStream): void {
+    deserialize(stream: GameBitStream): void {
         this.name = stream.readASCIIString(GameConstants.player.nameMaxLength);
         this.class = ClassDefs.read(stream);
     }
 }
-
-ClientToServerPackets.register(JoinPacket);

@@ -1,3 +1,9 @@
+export enum EntityType {
+    Player,
+    Projectile,
+    Asteroid
+}
+
 export const GameConstants = {
     maxPosition: 1024,
     player: {

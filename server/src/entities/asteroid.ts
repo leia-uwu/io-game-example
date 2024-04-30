@@ -1,5 +1,4 @@
-import { GameConstants } from "../../../common/src/constants";
-import { EntityType } from "../../../common/src/net";
+import { EntityType, GameConstants } from "../../../common/src/constants";
 import { type EntitiesNetData } from "../../../common/src/packets/updatePacket";
 import { CircleHitbox } from "../../../common/src/utils/hitbox";
 import { MathUtils } from "../../../common/src/utils/math";
